@@ -115,6 +115,8 @@ main {
 }
 .focus-count { color: var(--muted); font: 11px var(--mono); }
 .collection-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+.collection-actions[hidden] { display: none; }
+.collection-actions button:disabled { opacity: .55; cursor: default; }
 .collection-actions button { min-height: 40px; font-size: 12px; }
 #search-toggle[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
 #collection-search { margin: 0 0 12px; }
@@ -122,6 +124,7 @@ main {
 [data-category="fort"] { --category-color: #ff9e91; }
 [data-category="mound"] { --category-color: #c9a7ff; }
 [data-category="civic"] { --category-color: #83e8cb; }
+[data-category="register"] { --category-color: #a7c4ef; }
 [data-category="estate"] { --category-color: #f1b862; }
 .pin {
   display: block; position: relative; width: 12px; height: 12px; margin: 4px;
@@ -239,17 +242,22 @@ footer { padding: 14px clamp(16px, 3vw, 42px); color: var(--muted); font-size: 1
       <button data-category="mound" aria-pressed="false" aria-controls="collection-results"><span>Mounds &amp; earthworks</span><span class="focus-count"></span></button>
       <button data-category="civic" aria-pressed="false" aria-controls="collection-results"><span>Civic &amp; rail</span><span class="focus-count"></span></button>
       <button data-category="estate" aria-pressed="false" aria-controls="collection-results"><span>Estates</span><span class="focus-count"></span></button>
+      <button data-category="register" aria-pressed="false" aria-controls="collection-results"><span>Historic Register</span><span class="focus-count"></span></button>
     </div>
     <div class="collection-actions">
       <button class="btn" id="browse-all" data-category="all" aria-pressed="false" aria-controls="collection-results">Browse all sites</button>
       <button class="btn" id="search-toggle" aria-expanded="false" aria-controls="collection-search">Search collection</button>
     </div>
     <div id="collection-search" hidden>
-      <input type="search" id="search" placeholder="Search places, styles, inventions…" aria-label="Search collection">
+      <input type="search" id="search" placeholder="Search sites, cities, or subjects…" aria-label="Search collection">
     </div>
     <div id="collection-results" hidden>
       <div class="meta" id="total" aria-live="polite"></div>
       <div class="list" id="list"></div>
+      <div class="collection-actions" id="result-pages" hidden>
+        <button class="btn" id="previous-results" type="button">Previous</button>
+        <button class="btn" id="next-results" type="button">Next</button>
+      </div>
     </div>
     <div class="dossier" id="dossier" hidden></div>
   </aside>
@@ -258,10 +266,10 @@ footer { padding: 14px clamp(16px, 3vw, 42px); color: var(--muted); font-size: 1
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const data=[
-{id:'chicago',name:'World’s Columbian Exposition',place:'Chicago, Illinois',year:'1893',cat:'exposition',lat:41.7826,lng:-87.5831,styles:['Beaux-Arts','Exposition','Temporary construction'],summary:'The White City transformed Jackson Park with monumental halls, electric lighting and a vast network of displays.',timeline:['1890–1893: Planning and construction','1893: Exposition opened','After 1893: Many temporary structures dismantled or destroyed'],people:['Daniel Burnham — director of works','Frederick Law Olmsted — landscape design'],inventions:['Ferris Wheel','Electrical and industrial exhibits'],questions:['Which structures used staff over timber or steel?','Which surviving plans document foundations and demolition?'],terms:'Worlds Columbian Exposition 1893 Chicago White City',size:6300000},
+{id:'chicago',sources:[["Library of Congress: Manufactures and Liberal Arts Building","https://www.loc.gov/item/93502470/"],["Library of Congress: fair maps and floor plans","https://blogs.loc.gov/maps/2024/12/chicago-in-1893-selected-maps-of-the-worlds-columbian-exposition/"],["My Lunch Break: Chicago fair discussion","https://www.youtube.com/watch?v=qqTHmCG8P64"]],aliases:["Manufactures and Liberal Arts Building","White City","Jackson Park"],name:'World’s Columbian Exposition',place:'Chicago, Illinois',year:'1893',cat:'exposition',lat:41.7826,lng:-87.5831,styles:['Beaux-Arts','Exposition','Temporary construction'],summary:'The White City transformed Jackson Park with monumental halls, electric lighting and a vast network of displays.',timeline:['1890–1893: Planning and construction','1893: Exposition opened','After 1893: Many temporary structures dismantled or destroyed'],people:['Daniel Burnham — director of works','Frederick Law Olmsted — landscape design'],inventions:['Ferris Wheel','Electrical and industrial exhibits'],questions:['Which structures used staff over timber or steel?','Which surviving plans document foundations and demolition?'],terms:'Worlds Columbian Exposition 1893 Chicago White City',size:6300000},
 {id:'stlouis',name:'Louisiana Purchase Exposition',place:'St. Louis, Missouri',year:'1904',cat:'exposition',lat:38.6385,lng:-90.2845,styles:['Beaux-Arts','Exposition','Temporary construction'],summary:'A large exposition in and around Forest Park featuring monumental temporary halls, cascades, transportation and technology exhibits.',timeline:['1901–1904: Fair planning and construction','1904: Exposition held','1905 onward: Temporary structures removed; selected permanent features remained'],people:['Isaac S. Taylor — director of works'],inventions:['Wireless telegraphy exhibits','Transportation and industrial machinery'],questions:['How were the temporary facades supported?','Which official fair reports itemize construction costs?'],terms:'Louisiana Purchase Exposition 1904 St Louis fair',size:5000000},
 {id:'sf',name:'Panama-Pacific International Exposition',place:'San Francisco, California',year:'1915',cat:'exposition',lat:37.8029,lng:-122.4484,styles:['Exposition','Classical','Temporary construction'],summary:'A celebration of the Panama Canal and San Francisco’s recovery, with monumental courts and the surviving Palace of Fine Arts.',timeline:['1911–1915: Fairground construction','1915: Exposition','After 1915: Most temporary buildings removed; Palace of Fine Arts later reconstructed'],people:['Bernard Maybeck — Palace of Fine Arts architect'],inventions:['Automotive and industrial displays','Telephone and communications exhibits'],questions:['Which parts of today’s Palace of Fine Arts are reconstructions?'],terms:'Panama Pacific International Exposition 1915 San Francisco',size:3000000},
-{id:'buffalo',name:'Pan-American Exposition',place:'Buffalo, New York',year:'1901',cat:'exposition',lat:42.9345,lng:-78.8736,styles:['Exposition','Electric architecture'],summary:'A fair celebrated for its electric illumination and the Electric Tower; most major exhibition structures no longer stand.',timeline:['1901: Exposition opened','1901: Fair closed and dismantling followed'],people:['John Galen Howard — Electric Tower architect'],inventions:['Electric illumination displays','Hydroelectric power demonstrations'],questions:['What do original electrical plans reveal about power distribution?'],terms:'Pan American Exposition 1901 Buffalo Electric Tower',size:2000000},
+{id:'buffalo',sources:[["Library of Congress: Temple of Music","https://www.loc.gov/item/99472509/"],["Buffalo History Museum: demolition of the fair","https://buffalohistorymuseum.com/2021/06/26/demolishing-the-pan-am/"]],aliases:["Temple of Music","Rainbow City"],name:'Pan-American Exposition',place:'Buffalo, New York',year:'1901',cat:'exposition',lat:42.9345,lng:-78.8736,styles:['Exposition','Electric architecture'],summary:'A fair celebrated for its electric illumination and the Electric Tower; most major exhibition structures no longer stand.',timeline:['1901: Exposition opened','1901: Fair closed and dismantling followed'],people:['John Galen Howard — Electric Tower architect'],inventions:['Electric illumination displays','Hydroelectric power demonstrations'],questions:['What do original electrical plans reveal about power distribution?'],terms:'Pan American Exposition 1901 Buffalo Electric Tower',size:2000000},
 {id:'omaha',name:'Trans-Mississippi Exposition',place:'Omaha, Nebraska',year:'1898',cat:'exposition',lat:41.2828,lng:-95.9408,styles:['Exposition','Temporary construction'],summary:'An exposition presenting the development of the trans-Mississippi West through elaborate temporary buildings and exhibits.',timeline:['1898: Exposition held','After 1898: Most temporary structures removed'],people:[],inventions:['Agricultural and industrial machinery'],questions:['Which contractors built the principal pavilions?'],terms:'Trans Mississippi Exposition 1898 Omaha',size:1200000},
 {id:'portland',name:'Lewis and Clark Centennial Exposition',place:'Portland, Oregon',year:'1905',cat:'exposition',lat:45.5433,lng:-122.7084,styles:['Exposition','Temporary construction'],summary:'A major regional exposition built around Guild’s Lake, with pavilions, industrial exhibits and landscaped grounds.',timeline:['1905: Exposition held','After 1905: Fairgrounds redeveloped'],people:[],inventions:['Industrial machinery','Transportation exhibits'],questions:['What evidence remains of former pavilion foundations?'],terms:'Lewis and Clark Centennial Exposition 1905 Portland',size:1000000},
 {id:'seattle',name:'Alaska–Yukon–Pacific Exposition',place:'Seattle, Washington',year:'1909',cat:'exposition',lat:47.6554,lng:-122.3085,styles:['Exposition','Landscape planning'],summary:'An exposition on the present University of Washington campus, showcasing Pacific trade and regional resources.',timeline:['1909: Exposition held','After 1909: University campus continued to evolve'],people:['John Charles Olmsted — landscape planning'],inventions:['Machinery and industrial displays'],questions:['Which exposition features survive within the campus plan?'],terms:'Alaska Yukon Pacific Exposition 1909 Seattle',size:1500000},
@@ -285,6 +293,942 @@ const data=[
 {"id": "mound8", "name": "Ocmulgee Mounds", "place": "Macon, Georgia", "year": "Pre-contact", "cat": "mound", "lat": 32.839, "lng": -83.607, "styles": ["Indigenous earthworks", "Archaeological landscape", "Mound"], "summary": "An Indigenous archaeological landscape. Explore documented construction phases, historical surveys, terrain models and community perspectives; buried architecture must be established through evidence.", "timeline": ["Indigenous construction and use: chronology varies by site", "Archaeological study and preservation: consult site records"], "people": [], "inventions": [], "questions": ["What architectural evidence has been documented?", "What can non-invasive surveys establish?", "What do Indigenous communities and archaeologists say about this place?"]},
 {"id": "mound9", "name": "Crystal River Archaeological State Park", "place": "Crystal River, Florida", "year": "Pre-contact", "cat": "mound", "lat": 28.897, "lng": -82.628, "styles": ["Indigenous earthworks", "Archaeological landscape", "Mound"], "summary": "An Indigenous archaeological landscape. Explore documented construction phases, historical surveys, terrain models and community perspectives; buried architecture must be established through evidence.", "timeline": ["Indigenous construction and use: chronology varies by site", "Archaeological study and preservation: consult site records"], "people": [], "inventions": [], "questions": ["What architectural evidence has been documented?", "What can non-invasive surveys establish?", "What do Indigenous communities and archaeologists say about this place?"]}
 ];
+// Creator leads were checked against the linked historical records.
+data.push(
+  {"id":"edgar-courthouse","name":"Edgar County Courthouse","year":"1891–1893","styles":["Romanesque Revival","Courthouse"],"aliases":["court house","county government","Lady Justice"],"summary":"The Romanesque Revival courthouse on the Paris town square was completed in November 1893. The local library identifies its general contractor as Hibbert Brothers of Newark, Ohio.","timeline":["1891: Construction began","November 1893: Building completed","1981: Listed on the National Register of Historic Places"],"people":["Hibbert Brothers — general contractor"],"questions":["What do local newspapers and county records reveal about the work and materials?"],"sources":[["Paris Carnegie Public Library: local history","https://parispubliclibrary.specialdistrict.org/local-history"],["Building survey and restoration","https://www.wje.com/projects/detail/edgar-county-courthouse"]],"place":"Paris, Illinois","lat":39.61171,"lng":-87.69571,"cat":"civic","inventions":[]},
+  {"id":"albert-pike-temple","name":"Albert Pike Memorial Temple","year":"1924","styles":["Classical Revival","Fraternal architecture"],"aliases":["Masonic temple","Scottish Rite","Masonic Center"],"summary":"This Classical Revival building on Scott Street was completed in 1924. The building’s National Register nomination describes its architectural significance.","timeline":["1924: Temple completed","November 13, 1986: Listed on the National Register of Historic Places"],"people":[],"questions":["What building records and historic photographs survive in Little Rock?"],"sources":[["National Register nomination","https://npgallery.nps.gov/GetAsset/54b86071-8f13-4523-b7af-b34ab0559e71"],["Encyclopedia of Arkansas","https://encyclopediaofarkansas.net/entries/albert-pike-memorial-temple-7407/"]],"place":"Little Rock, Arkansas","lat":34.74166,"lng":-92.27069,"cat":"civic","inventions":[]},
+  {"id":"salt-lake-city-county-building","name":"Salt Lake City and County Building","year":"1894","styles":["Richardsonian Romanesque","City hall"],"aliases":["Salt Lake municipal headquarters","Salt Lake city hall","City & County Building"],"summary":"Completed in 1894, the Richardsonian Romanesque building served both the city and county. A later Historic American Buildings Survey documents the structure.","timeline":["1894: Building completed"],"people":[],"questions":["Which original construction documents survive, and how do they compare with the later survey?"],"sources":[["Salt Lake City: building history","https://www.slc.gov/district4/tour-district-4/city-and-county-building/"],["Historic American Buildings Survey","https://tile.loc.gov/storage-services/master/pnp/habshaer/ut/ut0100/ut0168/data/ut0168data.pdf"]],"place":"Salt Lake City, Utah","lat":40.75957,"lng":-111.88669,"cat":"civic","inventions":[]}
+);
+// Public NPS National Register spatial dataset, retrieved 2026-11-28.
+// Snapshot of 18 listed buildings per state, with preference given to named
+// civic, rail, industrial, and cultural buildings. See the dataset link below.
+// Tuple order:
+// reference, resource name, locality, latitude, longitude, certification date.
+const registerRows = [
+  ["74000410","Alabama City Library","Gadsden, Alabama",34.02566,-86.04117,"1974-12"],
+  ["71001070","Alabama Great Southern Railroad Passenger Depot","Fort Payne, Alabama",34.44425,-85.71858,"1971-09"],
+  ["85002163","Alabama Midland Railway Depot","Ashford, Alabama",31.18291,-85.23736,"1985-09"],
+  ["79000386","Alabama Theatre","Birmingham, Alabama",33.50864,-86.8049,"1979-11"],
+  ["75000320","Albertville Depot","Albertville, Alabama",34.26655,-86.20616,"1975-02"],
+  ["93001519","Atlantic Coastline Railroad Passenger Depot","Dothan, Alabama",31.23079,-85.39153,"1994-01"],
+  ["73000351","Auburn Players Theater","Auburn, Alabama",32.60485,-85.48079,"1973-05"],
+  ["84000746","Bama Theatre-City Hall Building","Tuscaloosa, Alabama",33.2085,-87.56815,"1984-08"],
+  ["76000312","Bullock County Courthouse","Union Springs, Alabama",32.14537,-85.71573,"1976-10"],
+  ["85002866","Calhoun County Courthouse","Anniston, Alabama",33.6585,-85.83107,"1985-10"],
+  ["01001407","Carnegie Library","Normal, Alabama",34.78477,-86.56944,"2001-12"],
+  ["82002041","Carver Theatre","Birmingham, Alabama",33.51491,-86.81183,"1982-02"],
+  ["84000606","Central of Georgia Depot","Andalusia, Alabama",31.30692,-86.48042,"1984-08"],
+  ["98000411","Clarke Mills","Jackson, Alabama",31.50928,-87.89712,"1998-04"],
+  ["76000316","Clay County Courthouse","Ashland, Alabama",33.27433,-85.83579,"1976-11"],
+  ["76000317","Cleburne County Courthouse","Heflin, Alabama",33.64965,-85.58813,"1976-06"],
+  ["73000335","Coffee County Courthouse","Elba, Alabama",31.41266,-86.06218,"1973-05"],
+  ["74000437","Columbiana City Hall","Columbiana, Alabama",33.17697,-86.60709,"1974-10"],
+  ["04000716","Agricultural Experiment Station Barn","Kodiak, Alaska",57.79286,-152.39821,"2004-07"],
+  ["80000745","Anchorage City Hall","Anchorage, Alaska",61.21825,-149.8931,"1980-12"],
+  ["99001027","Anchorage Depot","Anchorage, Alaska",61.22154,-149.89028,"1999-08"],
+  ["10000072","Brooks River Historic Ranger Station","King Salmon, Alaska",58.55613,-155.77809,"2010-03"],
+  ["79000412","Cable House and Station","Sitka, Alaska",57.04953,-135.33921,"1979-06"],
+  ["02000561","City Hall, Old","Fairbanks, Alaska",64.84194,-147.72118,"2002-05"],
+  ["78003425","Cooper Landing Post Office","Cooper Landing, Alaska",60.48986,-149.83477,"1978-05"],
+  ["77001571","Cordova Post Office and Courthouse","Cordova, Alaska",60.54449,-145.75704,"1977-08"],
+  ["78000516","Federal Building-U.S. Courthouse","Anchorage, Alaska",61.21875,-149.89501,"1978-06"],
+  ["82001620","Fourth Avenue Theatre (AHRS Site No. ANC-284)","Anchorage, Alaska",61.21851,-149.89546,"1982-10"],
+  ["06000463","Juneau Memorial Library","Juneau, Alaska",58.30326,-134.41293,"2006-06"],
+  ["90000878","Lacey Street Theatre","Fairbanks, Alaska",64.8437,-147.7179,"1990-06"],
+  ["78000536","Mills House","Sitka, Alaska",57.05102,-135.33791,"1978-01"],
+  ["77000226","Mills, W. P., House","Sitka, Alaska",57.04791,-135.32997,"1977-12"],
+  ["02000562","Mt. Alyeska Roundhouse","Girdwood, Alaska",60.96149,-149.08041,"2003-11"],
+  ["77000229","Nenana Depot","Nenana, Alaska",64.5641,-149.10293,"1977-08"],
+  ["78000530","Palmer Depot","Palmer, Alaska",61.60627,-149.1117,"1978-01"],
+  ["80004563","Point Barrow Refuge Station","Barrow, Alaska",71.29729,-156.77646,"1980-12"],
+  ["79000426","American Flag Post Office Ranch","Oracle, Arizona",32.58014,-110.72066,"1979-06"],
+  ["85002044","Arizona Compress & Warehouse Co. Warehouse","Phoenix, Arizona",33.44577,-112.05377,"1985-09"],
+  ["78000548","Beet Sugar Factory","Glendale, Arizona",33.53756,-112.17185,"1978-01"],
+  ["93000519","Big Springs Ranger Station","Big Springs, Arizona",36.60336,-112.35046,"1993-06"],
+  ["84000171","Borden Milk Co. Creamery and Ice Factory","Tempe, Arizona",33.4194,-111.91578,"1984-10"],
+  ["93000520","Camp Clover Ranger Station","Williams, Arizona",35.23694,-112.21973,"1993-07"],
+  ["93000513","Canelo Ranger Station","Canelo, Arizona",31.55141,-110.51705,"1993-06"],
+  ["00001126","Cave Creek Service Station","Cave Creek, Arizona",33.83205,-111.9482,"2000-09"],
+  ["100003323","Celebrity Theatre","Phoenix, Arizona",33.45444,-112.01475,"2019-01"],
+  ["85002051","Chambers Transfer & Storage Co.-Central Warehouse","Phoenix, Arizona",33.44475,-112.07291,"1985-09"],
+  ["93000514","Cima Park Fire Guard Station","Douglas, Arizona",31.86156,-109.28253,"1993-06"],
+  ["86001577","City Hall and Jail","Wickenburg, Arizona",33.97036,-112.73062,"1986-07"],
+  ["93000516","Columbine Work Station","Safford, Arizona",32.70357,-109.91349,"1993-06"],
+  ["85002054","Copeland & Tracht Service Station","Phoenix, Arizona",33.45163,-112.09591,"1985-09"],
+  ["93000525","Copper Creek Guard Station","Black Canyon City, Arizona",34.21406,-111.97857,"1993-06"],
+  ["93000522","Crown King Ranger Station","Crown King, Arizona",34.20626,-112.34166,"1993-06"],
+  ["03000903","El Paso and Southwestern Railroad Depot","Tucson, Arizona",32.2315,-110.97815,"2004-03"],
+  ["86000792","El Paso and Southwestern Railroad Passenger Depot--Douglas","Douglas, Arizona",31.34949,-109.55639,"1986-04"],
+  ["08000726","Adams, Wallace, Service Station","Texarkana, Arkansas",33.42679,-94.03855,"2008-08"],
+  ["92001621","Arkansas County Courthouse--Northern District","Stuttgart, Arkansas",34.49989,-91.55169,"1992-11"],
+  ["92001620","Arkansas County Courthouse--Southern District","DeWitt, Arkansas",34.29523,-91.33509,"1992-11"],
+  ["100009391","Ashley County Courthouse","Hamburg, Arkansas",33.22739,-91.79616,"2023-09"],
+  ["79000458","Atkinson-Williams Warehouse","Fort Smith, Arkansas",35.38746,-94.42846,"1979-12"],
+  ["100001232","Barton Library","El Dorado, Arkansas",33.22235,-92.66179,"2024-12"],
+  ["95000658","Baxter County Courthouse","Mountain Home, Arkansas",36.33525,-92.38488,"1995-05"],
+  ["79000465","Beebe Railroad Station","Beebe, Arkansas",35.06971,-91.88036,"1979-12"],
+  ["91001265","Beebe Theater","Beebe, Arkansas",35.07097,-91.87946,"1991-09"],
+  ["87002340","Benton County Courthouse","Bentonville, Arkansas",36.37266,-94.20771,"1988-01"],
+  ["100011312","Bentonville Post Office","Bentonville, Arkansas",36.37318,-94.20787,"2025-01"],
+  ["87002337","Bentonville Train Station","Bentonville, Arkansas",36.36705,-94.2094,"1988-01"],
+  ["98000922","Berryville Post Office","Berryville, Arkansas",36.36452,-93.56577,"1998-08"],
+  ["12001229","Black, L.A., Rice Milling Association Inc. Office","DeWitt, Arkansas",34.29268,-91.34063,"2013-01"],
+  ["87000447","Blytheville Greyhound Bus Station","Blytheville, Arkansas",35.9282,-89.90819,"1987-08"],
+  ["92000612","Blytheville, Leachville and Arkansas Southern Railroad Depot--Leachville","Leachville, Arkansas",35.9375,-90.25932,"1992-06"],
+  ["76000387","Boone County Courthouse","Harrison, Arkansas",36.2304,-93.10823,"1976-07"],
+  ["99001260","Bradford City Hall--Byers Masonic Lodge","Bradford, Arkansas",35.42434,-91.45536,"1999-10"],
+  ["76000513","A. K. Smiley Public Library","Redlands, California",34.05416,-117.18399,"1976-12"],
+  ["80000791","Alameda City Hall","Alameda, California",37.76631,-122.24414,"1980-10"],
+  ["82002152","Alameda Free Library","Alameda, California",37.76577,-122.24357,"1982-06"],
+  ["96000102","Alexander Theatre","Glendale, California",34.14908,-118.25428,"1996-02"],
+  ["04001074","Alpine County Courthouse","Markleeville, California",38.69446,-119.77959,"2004-09"],
+  ["71000164","Angel Island Immigration Station","Tiburon, California",37.86934,-122.42637,"1971-10"],
+  ["93000668","Arlington Branch Library and Fire Hall","Riverside, California",33.91964,-117.44745,"1993-07"],
+  ["76000529","Ashworth-Remillard House","San Jose, California",37.32861,-121.86037,"1976-12"],
+  ["01000025","Atchison, Topeka and Santa Fe Railway Passenger and Freight Depot","San Bernardino, California",34.10477,-117.30943,"2001-02"],
+  ["82002188","Atchison, Topeka, and Santa Fe Railroad Station","Claremont, California",34.09414,-117.71689,"1982-07"],
+  ["11000935","Auburn City Hall and Fire House","Auburn, California",38.89834,-121.07051,"2012-12"],
+  ["11000153","Auburn Public Library","Auburn, California",38.89981,-121.07213,"2011-03"],
+  ["100000779","Azteca Theater","Fresno, California",36.72926,-119.79308,"2017-03"],
+  ["96001177","Balboa Theatre","San Diego, California",32.71403,-117.16135,"1996-10"],
+  ["72000240","Bale Mill","St. Helena, California",38.54126,-122.5093,"1972-06"],
+  ["100001664","Benicia Southern Pacific Railroad Passenger Depot","Benicia, California",38.04456,-122.16196,"2017-09"],
+  ["82002156","Berkeley Public Library","Berkeley, California",37.86822,-122.26845,"1982-06"],
+  ["100006073","Buon Gusto Sausage Factory","San Francisco, California",37.79943,-122.40803,"2021-02"],
+  ["06000916","Adams County Courthouse","Brighton, Colorado",39.98636,-104.81764,"2006-10"],
+  ["95001149","Alamosa County Courthouse","Alamosa, Colorado",37.46882,-105.8677,"1995-09"],
+  ["09000544","Alamosa Post Office","Alamosa, Colorado",37.4695,-105.86745,"2009-07"],
+  ["75000521","Arvada Flour Mill","Arvada, Colorado",39.79843,-105.08137,"1975-04"],
+  ["79000597","Atchison, Topeka and Santa Fe Passenger Depot","Colorado Springs, Colorado",38.83278,-104.81423,"1979-09"],
+  ["100004186","Atchison, Topeka and Santa Fe Railway Passenger Depot","Lamar, Colorado",38.08965,-102.6184,"2019-07"],
+  ["87001137","Bear Lake Comfort Station","Estes Park, Colorado",40.31233,-105.64565,"1988-01"],
+  ["76000546","Bent County Courthouse and Jail","Las Animas, Colorado",38.06413,-103.22052,"1976-01"],
+  ["97000018","Bluebird Theater","Denver, Colorado",39.74042,-104.94825,"1997-01"],
+  ["91001417","Bonfils Memorial Theater","Denver, Colorado",39.73988,-104.95642,"2006-12"],
+  ["97000618","Boone Santa Fe Railroad Depot","Boone, Colorado",38.24862,-104.25695,"1997-06"],
+  ["100007489","Buena Vista Ranger Station","Buena Vista, Colorado",38.84311,-106.12889,"2022-03"],
+  ["95000476","Calhan Rock Island Railroad Depot","Calhan, Colorado",39.03822,-104.29975,"1995-04"],
+  ["79000573","Carnegie Library","Boulder, Colorado",40.01985,-105.28155,"1979-02"],
+  ["95000439","Carnegie Library","Monte Vista, Colorado",37.57993,-106.1451,"1995-04"],
+  ["95000438","Carnegie Public Library","Trinidad, Colorado",37.16821,-104.50833,"1995-04"],
+  ["95001247","Carnegie Public Library","Rocky Ford, Colorado",38.04972,-103.71925,"1995-11"],
+  ["74000575","Castle Rock Depot","Castle Rock, Colorado",39.37407,-104.86238,"1974-10"],
+  ["100008602","Aeolian Company Factory Complex","Meriden, Connecticut",41.5511,-72.78668,"2023-01"],
+  ["94000768","Aldrich Free Public Library","Plainfield, Connecticut",41.719,-71.87495,"1994-07"],
+  ["92000389","Allen's Cider Mill","Granby, Connecticut",41.99572,-72.83167,"1992-04"],
+  ["83001276","American Mills Web Shop","West Haven, Connecticut",41.29569,-72.95522,"1983-03"],
+  ["85001828","Ansonia Library","Ansonia, Connecticut",41.34538,-73.07642,"1985-08"],
+  ["11000612","Armstrong, M. and Company Carriage Factory","New Haven, Connecticut",41.30574,-72.9117,"2011-08"],
+  ["81000616","Benedict-Miller House","Waterbury, Connecticut",41.56177,-73.04123,"1981-06"],
+  ["86001257","Brayton Grist Mill","Pomfret, Connecticut",41.95085,-71.97559,"1986-06"],
+  ["77001387","Bridgeport City Hall","Bridgeport, Connecticut",41.17681,-73.19032,"1977-09"],
+  ["78002882","City Hall","Waterbury, Connecticut",41.55389,-73.04377,"1978-10"],
+  ["88002679","Clark Brothers Factory No. 1","Southington, Connecticut",41.56752,-72.90242,"1988-12"],
+  ["88002680","Clark Brothers Factory No. 2","Southington, Connecticut",41.571,-72.89571,"1988-12"],
+  ["81000535","Connecticut State Library and Supreme Court Building","Hartford, Connecticut",41.76262,-72.68316,"1981-06"],
+  ["72001313","Cornwall Bridge Railroad Station","Cornwall, Connecticut",41.81983,-73.37172,"1972-04"],
+  ["89000928","Cos Cob Railroad Station","Greenwich, Connecticut",41.02993,-73.60009,"1989-07"],
+  ["88000708","Cossitt, Frederick H., Library","Granby, Connecticut",41.99587,-72.83033,"1988-06"],
+  ["81000618","Curtis Memorial Library","Meriden, Connecticut",41.53556,-72.79749,"1981-04"],
+  ["94001445","Deep River Freight Station","Deep River, Connecticut",41.39411,-72.42658,"1994-12"],
+  ["72000300","Abbott's Mill","Milford, Delaware",38.88622,-75.47631,"1972-08"],
+  ["82002334","Aetna Hose, Hook and Ladder Company Fire Station No. 2","Newark, Delaware",39.68217,-75.74925,"1982-05"],
+  ["82002335","Aetna Hose, Hook and Ladder Company, Fire Station No. 1","Newark, Delaware",39.68216,-75.74923,"1982-05"],
+  ["90001065","Bridgeville Public Library","Bridgeville, Delaware",38.74345,-75.60238,"1990-07"],
+  ["78000918","Chipman's Mill","Laurel, Delaware",38.56178,-75.53966,"1978-05"],
+  ["86003066","Clayton Railroad Station","Clayton, Delaware",39.29127,-75.6329,"1986-11"],
+  ["72001597","England House and Mill","Newark, Delaware",39.69226,-75.70776,"1972-02"],
+  ["81000191","Felton Railroad Station","Felton, Delaware",39.01069,-75.57598,"1981-07"],
+  ["79000642","Fenwick Island Lighthouse Station","Fenwick Island, Delaware",38.45146,-75.05485,"1979-08"],
+  ["78000928","Hearn and Rawlins Mill","Seaford, Delaware",38.679,-75.59382,"1978-05"],
+  ["76000582","Indian River Life Saving Service Station","Bethany Beach, Delaware",38.63368,-75.06712,"1976-09"],
+  ["83001376","Kenton Post Office","Kenton, Delaware",39.2272,-75.66453,"1983-06"],
+  ["03001386","Liston Range Front Lighthouse","Bay View Beach, Delaware",39.76225,-75.56097,"2004-01"],
+  ["73000511","Lum's Mill House","Kirkwood, Delaware",39.55066,-75.71354,"1973-05"],
+  ["72000294","Masonic Hall and Grand Theater","Wilmington, Delaware",39.74364,-75.54853,"1972-12"],
+  ["83001356","Milford Railroad Station","Milford, Delaware",38.91065,-75.43204,"1983-01"],
+  ["73000530","Mill Creek Friends Meetinghouse","Newark, Delaware",39.76643,-75.74141,"1973-04"],
+  ["83001380","Mill House","Milford, Delaware",38.91308,-75.43424,"1983-01"],
+  ["16000359","Ace Theatre","Miami, Florida",25.72743,-80.25285,"2016-06"],
+  ["91001541","Aladdin Theater","Cocoa, Florida",28.35559,-80.7261,"1991-10"],
+  ["14000187","American Red Cross Volunteer Life Saving Corps Station","Jacksonville Beach, Florida",30.28879,-81.38898,"2014-05"],
+  ["84000967","Anderson-Price Memorial Library Building","Ormond Beach, Florida",29.28683,-81.0563,"1984-01"],
+  ["93000134","Apopka Seaboard Air Line Railway Depot","Apopka, Florida",28.67003,-81.51069,"1993-03"],
+  ["07000698","Archbold Biological Station at Red Hill","Venus, Florida",27.6688,-81.35326,"2007-07"],
+  ["90001277","Atlantic Coast Line Railroad Depot","Lake Wales, Florida",27.89831,-81.58475,"1990-08"],
+  ["100007973","Atlantic Coast Line Station","Orlando, Florida",28.5259,-81.38166,"2022-07"],
+  ["88003060","Atlantic Gas Station","Miami, Florida",25.7784,-80.2059,"1988-12"],
+  ["13000964","Auburndale City Hall","Auburndale, Florida",28.0654,-81.78913,"2013-12"],
+  ["85003053","Baird Hardware Company Warehouse","Gainesville, Florida",29.64431,-82.32436,"1985-11"],
+  ["95000816","Barracks and Mess Building--US Coast Guard Air Station at Dinner Key","Miami, Florida",25.73232,-80.23492,"1995-08"],
+  ["96000447","Boca Grande Quarantine Station","Boca Grande, Florida",26.71973,-82.26154,"1996-03"],
+  ["80000958","Boca Raton Old City Hall","Boca Raton, Florida",26.35123,-80.08678,"1980-10"],
+  ["96000823","Bow, Lily Lawrence, Library","Homestead, Florida",25.47189,-80.47955,"1996-08"],
+  ["87000616","Bradenton Carnegie Library","Bradenton, Florida",27.49638,-82.57556,"1987-04"],
+  ["100003406","Bunnell City Hall","Bunnell, Florida",29.46575,-81.25557,"2019-02"],
+  ["15000208","Cape San Blas Lighthouse at Port St. Joe","Port St. Joe, Florida",29.81289,-85.30668,"2015-05"],
+  ["06000733","Albany Theatre","Albany, Georgia",31.57736,-84.15412,"2006-08"],
+  ["83000182","Alma Depot","Alma, Georgia",31.543,-82.46929,"1983-04"],
+  ["80000965","Appling County Courthouse","Baxley, Georgia",31.77806,-82.34923,"1980-09"],
+  ["80000966","Atkinson County Courthouse","Pearson, Georgia",31.29752,-82.85281,"1980-09"],
+  ["76000620","Atlanta and West Point Railroad Freight Depot","Atlanta, Georgia",33.75911,-84.38274,"1976-03"],
+  ["92001070","Atlanta Buggy Company and Warehouse--Hatcher Bros. Furniture Company","Atlanta, Georgia",33.77276,-84.40553,"1992-08"],
+  ["83000227","Atlanta City Hall","Atlanta, Georgia",33.749,-84.39028,"1983-07"],
+  ["78000982","Atlanta Waterworks Hemphill Avenue Station","Atlanta, Georgia",33.78742,-84.40822,"1978-03"],
+  ["80000967","Bacon County Courthouse","Alma, Georgia",31.54127,-82.46263,"1980-09"],
+  ["80004443","Baker County Courthouse","Newton, Georgia",31.31442,-84.33519,"1980-09"],
+  ["80000969","Banks County Courthouse","Homer, Georgia",34.3348,-83.49878,"1980-09"],
+  ["86000916","Barnesville Depot","Barnesville, Georgia",33.05449,-84.15572,"1986-04"],
+  ["80000970","Barrow County Courthouse","Winder, Georgia",33.99243,-83.72152,"1980-09"],
+  ["80000971","Bartow County Courthouse","Cartersville, Georgia",34.16593,-84.79791,"1980-09"],
+  ["80000973","Ben Hill County Courthouse","Fitzgerald, Georgia",31.715,-83.25991,"1980-09"],
+  ["77000409","Berrien County Courthouse","Nashville, Georgia",31.20733,-83.25257,"1977-12"],
+  ["00000070","Blackshear Depot","Blackshear, Georgia",31.30274,-82.24111,"2000-02"],
+  ["80000975","Bleckley County Courthouse","Cochran, Georgia",32.38757,-83.35538,"1980-09"],
+  ["80001273","Central Fire Station","Honolulu, Hawaii",21.31287,-157.85888,"1980-12"],
+  ["100004287","Dearborn Chemical Company Warehouse","Honolulu, Hawaii",21.29792,-157.8532,"2019-08"],
+  ["79000752","District Courthouse and Police Station","Hilo, Hawaii",19.72627,-155.08536,"1979-09"],
+  ["91001086","Hana District Police Station and Courthouse","Hana, Hawaii",20.75909,-155.98651,"1991-08"],
+  ["78001021","Hawaii Theatre","Honolulu, Hawaii",21.31253,-157.861,"1978-11"],
+  ["94001622","Iao Theater","Wailuku, Hawaii",20.89055,-156.50211,"1995-02"],
+  ["100001917","International Longshore and Warehouse Union (ILWU) Jack Wayne Hall Building","Honoka'a, Hawaii",20.08037,-155.47183,"2018-10"],
+  ["80001276","Kaimuki Fire Station","Honolulu, Hawaii",21.26613,-161.4744,"1980-12"],
+  ["80001277","Kakaako Fire Station","Honolulu, Hawaii",21.30398,-157.85919,"1980-12"],
+  ["78001022","Kakaako Pumping Station","Honolulu, Hawaii",21.29971,-157.86283,"1978-10"],
+  ["80001278","Kalihi Fire Station","Honolulu, Hawaii",21.34217,-157.87567,"1980-12"],
+  ["72000416","Kamehameha V Post Office","Honolulu, Hawaii",21.30935,-157.86057,"1972-05"],
+  ["79000754","Kohala District Courthouse","Kapaau, Hawaii",20.22991,-155.79809,"1979-08"],
+  ["80001280","Makiki Fire Station","Honolulu, Hawaii",21.28745,-161.87644,"1980-12"],
+  ["100008051","Naval Aviation Supply Depot Personnel Camp Quonset Hut 33","Pearl City, Hawaii",21.39331,-157.97622,"2023-02"],
+  ["93000376","Palace Theater","Hilo, Hawaii",19.71635,-155.68735,"1993-05"],
+  ["76000661","Palama Fire Station","Honolulu, Hawaii",21.32405,-157.8679,"1976-04"],
+  ["100010125","The Bookkeeper's House, Pioneer Mill-Lahaina Ice Co.","Lahaina, Hawaii",20.86224,-156.67052,"2025-11"],
+  ["74000724","Ada Theater","Boise, Idaho",43.61489,-116.20235,"1974-11"],
+  ["87001599","Adams County Courthouse","Council, Idaho",44.72955,-116.4322,"1987-09"],
+  ["84001142","Avery Depot","Avery, Idaho",47.2502,-115.80636,"1984-09"],
+  ["77000454","Bear Lake County Courthouse","Paris, Idaho",42.22716,-111.40046,"1977-10"],
+  ["87001580","Benewah County Courthouse","St. Maries, Idaho",47.31507,-116.56689,"1987-09"],
+  ["74000731","Blackfoot Railway Depot","Blackfoot, Idaho",43.18924,-112.34378,"1974-11"],
+  ["78001050","Blaine County Courthouse","Hailey, Idaho",43.51893,-114.31259,"1978-02"],
+  ["99001412","Blue Fox Theatre","Grangeville, Idaho",45.92548,-116.12025,"1999-11"],
+  ["79000781","Bonneville County Courthouse","Idaho Falls, Idaho",43.49504,-112.04121,"1979-07"],
+  ["87001581","Boundary County Courthouse","Bonners Ferry, Idaho",48.69601,-116.3137,"1987-09"],
+  ["09001280","Bovill Opera House","Bovill, Idaho",46.86133,-116.39587,"2010-01"],
+  ["78001099","Buhl City Hall","Buhl, Idaho",42.59987,-114.76147,"1978-02"],
+  ["79000784","Caldwell Carnegie Library","Caldwell, Idaho",43.66219,-116.6862,"1979-06"],
+  ["87001582","Caribou County Courthouse","Soda Springs, Idaho",42.65568,-111.60312,"1987-09"],
+  ["100002548","Carnegie Library","Lewiston, Idaho",46.42017,-117.02658,"2018-06"],
+  ["74000725","Carnegie Public Library","Boise, Idaho",43.61933,-116.2004,"1974-11"],
+  ["87001583","Cassia County Courthouse","Burley, Idaho",42.53452,-113.79266,"1987-09"],
+  ["79000792","Coeur d'Alene City Hall","Coeur d'Alene, Idaho",47.67325,-116.77962,"1979-08"],
+  ["12001236","42nd Precinct Police Station","Chicago, Illinois",41.94941,-87.64979,"2013-01"],
+  ["96000515","7th District Police Station","Chicago, Illinois",41.86459,-87.65069,"1996-05"],
+  ["81000675","Adams Memorial Library","Wheaton, Illinois",41.87506,-88.10657,"1981-06"],
+  ["87001267","Alexis Opera House","Alexis, Illinois",41.06288,-90.55593,"1987-07"],
+  ["92001015","Amboy Illinois Central Depot","Amboy, Illinois",41.71397,-89.33204,"1992-08"],
+  ["94000977","Arcada Theater Building","St. Charles, Illinois",41.9137,-88.31211,"1994-08"],
+  ["02000459","Arcola Carnegie Public Library","Arcola, Illinois",39.68616,-88.30315,"2002-05"],
+  ["80004525","Ardmore Avenue Train Station","Villa Park, Illinois",41.8836,-87.97968,"1980-11"],
+  ["79000852","Atlanta Public Library","Atlanta, Illinois",40.25361,-89.23392,"1979-12"],
+  ["98001352","Ayer Public Library","Delavan, Illinois",40.37438,-89.54691,"1998-11"],
+  ["86003181","Balaban & Katz Uptown Theatre","Chicago, Illinois",41.96965,-87.66069,"1986-11"],
+  ["79000822","Balaban and Katz Chicago Theatre","Chicago, Illinois",41.88553,-87.62728,"1979-06"],
+  ["98000112","Baltimore and Ohio Railroad Depot","Flora, Illinois",38.66797,-88.48833,"1998-02"],
+  ["00000471","Beardstown Grand Opera House","Beardstown, Illinois",40.01752,-90.43431,"2000-05"],
+  ["07000060","Belvidere Cafe, Motel and Gas Station","Litchfield, Illinois",39.1711,-89.66753,"2007-02"],
+  ["84000934","Biograph Theater Building","Chicago, Illinois",41.92639,-87.64927,"1984-05"],
+  ["100008001","Bishop’s Busy Big Store-Lyric Opera House","Elizabeth, Illinois",42.31854,-90.22164,"2022-08"],
+  ["00000945","Bretz, John F., House and Warehouse","Springfield, Illinois",39.81412,-89.64956,"2000-08"],
+  ["08000914","Adams County Courthouse","Decatur, Indiana",40.82969,-84.92454,"2008-09"],
+  ["84000278","Adams Mill","Cutler, Indiana",40.48058,-86.50814,"1984-11"],
+  ["76000031","Allen County Courthouse","Fort Wayne, Indiana",41.07983,-85.13935,"1976-05"],
+  ["09000427","American Sheet and Tin Mill Apartment Building","Gary, Indiana",41.60363,-87.3454,"2009-06"],
+  ["06001294","Amo THI & E Interurban Depot/Substation","Amo, Indiana",39.68831,-86.61341,"2007-01"],
+  ["96000288","Aurora City Hall","Aurora, Indiana",39.05541,-84.9,"1996-03"],
+  ["93000474","Aurora Public Library","Aurora, Indiana",39.05697,-84.90122,"1993-05"],
+  ["73000033","Ayres, L. S. Annex Warehouse","Indianapolis, Indiana",39.76587,-86.15833,"1973-04"],
+  ["04001102","Bailey, Louis J., Branch Library--Gary International Institute","Gary, Indiana",41.58761,-87.34124,"2004-09"],
+  ["79000031","Bartholomew County Courthouse","Columbus, Indiana",39.20116,-85.92135,"1979-11"],
+  ["90001789","Beck's Mill","Salem, Indiana",38.53805,-86.15499,"1990-12"],
+  ["100006563","Bedford Southern Indiana Railroad Passenger Depot","Bedford, Indiana",38.86302,-86.48446,"2021-05"],
+  ["08000741","Benton County Courthouse","Fowler, Indiana",40.61723,-87.31519,"2008-08"],
+  ["89000411","Beverly Shores South Shore Railroad Station","Beverly Shores, Indiana",41.67342,-86.98586,"1989-07"],
+  ["03000548","Big Four Depot","Lafayette, Indiana",40.41869,-86.89546,"2003-06"],
+  ["80000053","Blackford County Courthouse","Hartford City, Indiana",40.45173,-85.36811,"1980-08"],
+  ["85001204","Blackstone-State Theater","South Bend, Indiana",41.67449,-86.2499,"1985-06"],
+  ["89001413","Bloomington City Hall","Bloomington, Indiana",39.16584,-86.53386,"1989-09"],
+  ["81000224","Adair County Courthouse","Greenfield, Iowa",41.30471,-94.45993,"1981-07"],
+  ["13000273","Administration Building, U.S. Naval Air Station Ottumwa","Ottumwa, Iowa",41.10823,-92.44096,"2013-05"],
+  ["12000403","Akron Opera House","Akron, Iowa",42.83075,-96.56007,"2012-07"],
+  ["81000241","Alden Public Library","Alden, Iowa",42.5185,-93.36724,"1981-03"],
+  ["77000492","Allamakee County Courthouse","Waukon, Iowa",43.27086,-91.47535,"1977-04"],
+  ["83000380","Anamosa Public Library","Anamosa, Iowa",42.1065,-91.28493,"1983-05"],
+  ["81000225","Appanoose County Courthouse","Centerville, Iowa",40.73379,-92.87467,"1981-07"],
+  ["77000493","Audubon County Courthouse","Exira, Iowa",41.59046,-94.87907,"1977-07"],
+  ["08001043","Avery Theater, The","Garner, Iowa",43.10252,-93.60188,"2008-11"],
+  ["99000831","Bedford Oil Company Station","Bedford, Iowa",40.66731,-94.72111,"1999-07"],
+  ["83000405","Bedford Public Library","Bedford, Iowa",40.60798,-94.74843,"1983-05"],
+  ["76000733","Benton County Courthouse","Vinton, Iowa",42.16802,-92.02369,"1976-10"],
+  ["14000359","Best Oil and Refining Company Service Station","Cedar Rapids, Iowa",41.97281,-91.65413,"2014-06"],
+  ["91001075","Big Mill Homestead","Bellevue, Iowa",42.27073,-90.51754,"1991-08"],
+  ["15000721","Bloomfield Public Library","Bloomfield, Iowa",40.75244,-92.4167,"2015-10"],
+  ["81000226","Boone County Courthouse","Boone, Iowa",42.05889,-93.90616,"1981-07"],
+  ["100006522","Brooklyn Opera House–Broadway Theatre","Brooklyn, Iowa",41.72914,-92.44505,"2021-05"],
+  ["76000761","Burlington and Missouri River Railroad Passenger Station","Burlington, Iowa",40.80606,-91.10547,"1976-10"],
+  ["04001142","Abernathy Furniture Company Factory","Leavenworth, Kansas",39.31983,-94.91009,"2004-10"],
+  ["93000894","Abilene Union Pacific Railroad Freight Depot","Abilene, Kansas",38.91619,-97.21735,"1993-09"],
+  ["92001175","Abilene Union Pacific Railroad Passenger Depot","Abilene, Kansas",38.91652,-97.21526,"1992-09"],
+  ["87000958","Anderson Carnegie Memorial Library","Emporia, Kansas",38.41281,-96.19428,"1987-06"],
+  ["72000483","Anderson County Courthouse","Garnett, Kansas",38.28067,-95.2303,"1972-04"],
+  ["87000954","Anthony Public Carnegie Library","Anthony, Kansas",37.15268,-98.00215,"1987-06"],
+  ["91000464","Anthony Theater","Anthony, Kansas",37.15238,-98.03166,"1991-04"],
+  ["86000919","Argentine Carnegie Library","Kansas City, Kansas",39.07416,-94.66116,"1986-04"],
+  ["01001090","Atchinson Santa Fe Freight Depot","Atchison, Kansas",39.55992,-95.12675,"2001-10"],
+  ["75000704","Atchison County Courthouse","Atchison, Kansas",39.56604,-95.11972,"1975-04"],
+  ["72000484","Atchison Post Office","Atchison, Kansas",39.56339,-95.12161,"1972-03"],
+  ["86001321","Atchison, Topeka and Santa Fe Railroad Passenger Depot","Leavenworth, Kansas",39.31662,-94.92461,"1986-06"],
+  ["00000791","Atchison, Topeka and Santa Fe Railway Depot","Dodge City, Kansas",37.75547,-100.01322,"2000-07"],
+  ["90001577","Augusta Theater","Augusta, Kansas",37.67716,-96.97933,"1990-10"],
+  ["03000841","Baxter Springs Independent Oil and Gas Service Station","Baxter Springs, Kansas",37.02588,-94.73498,"2003-08"],
+  ["72000514","Blue Rapids Library","Blue Rapids, Kansas",39.68204,-96.65832,"1972-03"],
+  ["88001903","Booth Theater","Independence, Kansas",37.22542,-95.70635,"1988-10"],
+  ["11000394","Broom Corn Warehouse","Wichita, Kansas",37.68362,-97.33106,"2011-06"],
+  ["74000847","Adair County Courthouse","Columbia, Kentucky",37.10283,-85.30607,"1974-08"],
+  ["77000662","Adkins--Hurt Mill","Mount Pisgah, Kentucky",36.6517,-84.80437,"1977-05"],
+  ["03000260","Axton--Fisher Tobacco Company Warehouse","Louisville, Kentucky",38.25047,-85.77599,"2003-04"],
+  ["80001480","Ballard County Courthouse","Wickliffe, Kentucky",36.96519,-89.08882,"1980-02"],
+  ["88003250","Belleview Post Office","Belleview, Kentucky",38.98604,-84.82643,"1990-06"],
+  ["88002045","Big Sandy Milling Company","Louisa, Kentucky",38.11682,-82.60649,"1988-11"],
+  ["80001642","Blankenbaker Station","St. Matthews, Kentucky",38.29468,-85.66478,"1980-12"],
+  ["74000851","Bourbon County Courthouse","Paris, Kentucky",38.21354,-84.24981,"1974-12"],
+  ["73000790","Boyle County Courthouse","Danville, Kentucky",37.64638,-84.77337,"1973-04"],
+  ["82001555","Bradford Mills","Louisville, Kentucky",38.22936,-85.73978,"1982-10"],
+  ["83002640","Bridges, C. A., Tobacco Warehouse","Louisville, Kentucky",38.25951,-85.77869,"1983-09"],
+  ["78001346","Brown Hotel Building and Theater","Louisville, Kentucky",38.24667,-85.75777,"1978-02"],
+  ["83002643","Brown Tobacco Warehouse","Louisville, Kentucky",38.25805,-85.76786,"1983-09"],
+  ["85001280","Bryantsville Post Office and Store","Bryantsville, Kentucky",37.71302,-84.65,"1985-06"],
+  ["100000737","Bush, V.W., Warehouse","Winchester, Kentucky",37.99648,-84.17507,"2017-03"],
+  ["83002878","Callis General Store and Post Office","Bedford, Kentucky",38.64469,-85.32831,"1983-07"],
+  ["86000287","Calloway County Courthouse","Murray, Kentucky",36.61026,-88.30225,"1986-02"],
+  ["79001028","Carlisle, Louisville and Nashville Passenger Depot","Carlisle, Kentucky",38.31149,-84.02861,"1979-05"],
+  ["88003225","Alexandria Public Library, Old","Alexandria, Louisiana",31.30886,-92.44528,"1989-01"],
+  ["81000287","Allen Parish Courthouse","Oberlin, Louisiana",30.62038,-92.768,"1981-06"],
+  ["95001484","Arabella Station","New Orleans, Louisiana",29.92079,-90.11754,"1996-01"],
+  ["97000966","Arcade Theater","Slidell, Louisiana",30.27331,-89.78396,"1997-08"],
+  ["97000057","Assumption Parish Courthouse and Jail","Napoleonville, Louisiana",29.9413,-91.02447,"1997-02"],
+  ["79001052","Bailey Theatre","Bunkie, Louisiana",30.95487,-92.18507,"1979-07"],
+  ["83000490","Beauregard Parish Courthouse","DeRidder, Louisiana",30.84631,-93.28723,"1983-09"],
+  ["79001095","Bogalusa City Hall","Bogalusa, Louisiana",30.78612,-89.86015,"1979-07"],
+  ["80001767","Bogalusa Railroad Station","Bogalusa, Louisiana",30.79031,-89.86071,"1980-05"],
+  ["100012783","Bunche Library","Rayne, Louisiana",30.24734,-92.27057,"2026-03"],
+  ["89001938","Calcasieu Parish Courthouse","Lake Charles, Louisiana",30.22614,-93.21838,"1989-11"],
+  ["98001078","Carver Theater","New Orleans, Louisiana",29.96697,-90.07684,"1998-08"],
+  ["10000395","Cash Grocery and Sales Company Warehouse","Lake Charles, Louisiana",30.22912,-93.21454,"2010-06"],
+  ["88002056","Catahoula Parish Courthouse","Harrisonburg, Louisiana",31.77161,-91.82117,"1988-10"],
+  ["84001277","Central Fire Station","Baton Rouge, Louisiana",30.45067,-91.18588,"1984-04"],
+  ["91000625","Central Fire Station","Shreveport, Louisiana",32.50865,-93.75092,"1991-05"],
+  ["91000622","Central Railroad Station","Shreveport, Louisiana",32.50895,-93.74539,"1991-05"],
+  ["74002250","City Hall","New Orleans, Louisiana",29.94863,-90.07111,"1974-05"],
+  ["09000595","(Former) Maine Central Railroad Depot","Brooks, Maine",44.55058,-69.12198,"2009-08"],
+  ["78000190","Abbott Memorial Library","Dexter, Maine",45.02451,-69.28863,"1978-11"],
+  ["81000103","Andover Public Library","Andover, Maine",44.63181,-70.75138,"1981-01"],
+  ["83003633","Androscoggin County Courthouse and Jail","Auburn, Maine",44.09777,-70.22668,"1983-12"],
+  ["01000367","Androscoggin Mill Block","Lewiston, Maine",44.0909,-70.21305,"2001-04"],
+  ["89002340","Aroostook County Courthouse and Jail","Houlton, Maine",46.12476,-67.8391,"1990-01"],
+  ["84001357","Auburn Public Library","Auburn, Maine",44.09802,-70.22919,"1984-03"],
+  ["97001134","Augusta City Hall, Former","Augusta, Maine",44.31693,-69.77116,"1997-09"],
+  ["08001253","Bailey Island Library Hall","Harpswell, Maine",43.73235,-69.99497,"2008-12"],
+  ["85001264","Bailey, Charles M., Library","Winthrop, Maine",44.30801,-69.97291,"1985-06"],
+  ["79000123","Barker Mill","Auburn, Maine",44.08768,-70.2271,"1979-05"],
+  ["09000593","Bass Harbor Memorial Library","Tremont, Maine",44.24181,-68.3563,"2009-08"],
+  ["73000156","Biddeford City Hall","Biddeford, Maine",43.49354,-70.45666,"1973-04"],
+  ["100003258","Boarding House and Storehouse at Churchill Depot","T10 R12 WELS, Maine",46.49455,-69.28661,"2018-12"],
+  ["77000077","Boothbay Harbor Memorial Library","Boothbay Harbor, Maine",43.85378,-69.62746,"1977-04"],
+  ["00000372","Bremen Town Hall, Former","Medomak, Maine",44.01311,-69.42115,"2000-04"],
+  ["89002339","Bridgewater Town Hall and Jail","Bridgewater, Maine",46.24598,-67.8468,"1990-01"],
+  ["75000099","Brown Memorial Library","Clinton, Maine",44.63856,-69.5032,"1975-04"],
+  ["100008654","Ambassador Theater","Baltimore, Maryland",39.33137,-76.69486,"2023-02"],
+  ["79003267","Avondale Mill","Laurel, Maryland",39.10716,-76.84573,"1979-09"],
+  ["74000953","Baltimore and Ohio Railroad Station, Oakland","Oakland, Maryland",39.40975,-79.41279,"1974-02"],
+  ["73002180","Baltimore City Hall","Baltimore (Independent City), Maryland",39.29094,-76.61053,"1973-05"],
+  ["72000569","Baltimore County Courthouse","Towson, Maryland",39.39983,-76.60637,"1972-10"],
+  ["99000133","Bethesda Theatre","Bethesda, Maryland",38.98744,-77.09441,"1999-02"],
+  ["80001798","Chesapeake Beach Railway Station","Chesapeake Beach, Maryland",38.69006,-76.53395,"1980-09"],
+  ["82001597","Chestertown Railroad Station","Chestertown, Maryland",39.20798,-76.06845,"1982-12"],
+  ["73000882","City Hall","Cumberland, Maryland",39.65284,-78.76248,"1973-02"],
+  ["01000407","Coca-Cola Baltimore Branch Factory","Baltimore (Independent City), Maryland",39.2686,-76.59762,"2001-05"],
+  ["78001478","Colonial Theatre","Hagerstown, Maryland",39.64136,-77.72005,"1978-08"],
+  ["78001473","Gaithersburg B & O Railroad Station and Freight Shed","Gaithersburg, Maryland",39.14112,-77.19892,"1978-10"],
+  ["75000899","Garrett County Courthouse","Oakland, Maryland",39.40741,-79.40669,"1975-11"],
+  ["07001284","Grief, L. and Bro., Inc. Manufactory","Baltimore (Independent City), Maryland",39.30143,-76.58221,"2007-12"],
+  ["99001670","Hippodrome Theatre","Baltimore (Independent City), Maryland",39.28989,-76.62117,"2000-01"],
+  ["09001282","Klots Throwing Company Mill","Cumberland, Maryland",39.6426,-78.76192,"2010-01"],
+  ["73002165","Laurel Railroad Station","Laurel, Maryland",39.10228,-76.84063,"1973-03"],
+  ["82002813","Lewis Mill Complex","Jefferson, Maryland",39.37224,-77.55902,"1982-05"],
+  ["01000625","Adams, Frederic C., Public Library","Kingston, Massachusetts",41.99587,-70.72936,"2001-06"],
+  ["80000483","Adriatic Mills","Worcester, Massachusetts",42.24691,-71.81301,"1980-03"],
+  ["83004103","Aldrich, Daniel, Cottage and Sawmill","Uxbridge, Massachusetts",42.02745,-71.64266,"1983-10"],
+  ["82001906","American Net and Twine Company Factory","Cambridge, Massachusetts",42.36686,-71.07954,"1982-04"],
+  ["100012354","Amesbury Public Library","Amesbury, Massachusetts",42.85537,-70.93295,"2025-12"],
+  ["82004961","Andover Town Hall","Andover, Massachusetts",42.65599,-71.13967,"1982-06"],
+  ["85001022","Arlington Pumping Station","Arlington, Massachusetts",42.4221,-71.16973,"1985-04"],
+  ["89000545","Ashland Mill Tenement","Southbridge, Massachusetts",42.06541,-72.00988,"1989-06"],
+  ["80000489","Ashworth and Jones Factory","Worcester, Massachusetts",42.23978,-71.86093,"1980-03"],
+  ["99000188","Bancroft Memorial Library","Hopedale, Massachusetts",42.13034,-71.5412,"1999-02"],
+  ["81000104","Barnstable County Courthouse","Barnstable, Massachusetts",41.70148,-70.30429,"1981-06"],
+  ["81000120","Baxter Mill","West Yarmouth, Massachusetts",41.66053,-70.26118,"1981-08"],
+  ["16000251","Beaman Memorial Public Library","West Boylston, Massachusetts",42.36305,-71.78403,"2016-05"],
+  ["73000292","Beaver Mill","North Adams, Massachusetts",42.70341,-73.09816,"1973-05"],
+  ["98001443","Belmont Railroad Station","Belmont, Massachusetts",42.39586,-71.17624,"1998-12"],
+  ["86001773","Bemis Mill","Newton, Massachusetts",42.36532,-71.20493,"1986-09"],
+  ["00000075","Bent, G.H., Company Factory","Milton, Massachusetts",42.24511,-71.06899,"2000-02"],
+  ["80000677","Berger Factory","Boston, Massachusetts",42.33276,-71.08254,"1980-04"],
+  ["77000719","Adrian Public Library","Adrian, Michigan",41.89711,-84.03697,"1977-12"],
+  ["05000719","Alger Theater","Detroit, Michigan",42.4037,-82.93707,"2005-07"],
+  ["83003643","Alpena County Courthouse","Alpena, Michigan",45.06813,-83.44154,"1983-12"],
+  ["82002857","Amazon Hosiery Mill","Muskegon, Michigan",43.23353,-86.25709,"1982-04"],
+  ["100005823","American Box Board Company Headquarters and Factory","Grand Rapids, Michigan",42.95423,-85.68203,"2020-11"],
+  ["72000658","Ann Arbor Central Fire Station","Ann Arbor, Michigan",42.28182,-83.73435,"1972-01"],
+  ["71000405","Ann Arbor Railway Station","Howell, Michigan",42.60946,-83.92932,"1971-05"],
+  ["80001846","Antrim County Courthouse","Bellaire, Michigan",44.97574,-85.20807,"1980-03"],
+  ["78000374","Au Sable Light Station","Grand Marais, Michigan",46.67271,-86.13928,"1978-05"],
+  ["81000303","Barry County Courthouse Complex","Hastings, Michigan",42.64822,-85.29004,"1981-08"],
+  ["84001377","Battle Creek City Hall","Battle Creek, Michigan",42.31682,-85.17932,"1984-04"],
+  ["72000597","Battle Creek Post Office","Battle Creek, Michigan",42.31737,-85.18003,"1972-08"],
+  ["93000427","Belding, Alvah N., Memorial Library","Belding, Michigan",43.09813,-85.22616,"1993-05"],
+  ["75000942","Bellevue Mill","Bellevue, Michigan",42.44587,-85.01611,"1975-03"],
+  ["96000611","Benzie County Courthouse","Beulah, Michigan",44.62757,-86.09623,"1996-06"],
+  ["00001486","Berkey and Gay Furniture Company Factory","Grand Rapids, Michigan",42.97899,-85.67183,"2000-12"],
+  ["70000265","Berrien Springs Courthouse","Berrien Springs, Michigan",41.95754,-86.34113,"1970-02"],
+  ["83004296","Big Sable Point Light Station","Mason, Michigan",44.05764,-86.51437,"1983-08"],
+  ["82002924","Aitkin Carnegie Library","Aitkin, Minnesota",46.53317,-93.70936,"1982-04"],
+  ["82002923","Aitkin County Courthouse and Jail","Aitkin, Minnesota",46.53298,-93.71053,"1982-04"],
+  ["84001412","Albert Lea City Hall","Albert Lea, Minnesota",43.6504,-93.36911,"1984-05"],
+  ["85001817","Alexandria Public Library","Alexandria, Minnesota",45.88493,-95.37884,"1985-08"],
+  ["79001180","Anoka Post Office","Anoka, Minnesota",45.19768,-93.38676,"1979-12"],
+  ["77000770","Appleton City Hall","Appleton, Minnesota",45.19982,-96.01915,"1977-06"],
+  ["84001660","Arlington Hills Library","St. Paul, Minnesota",44.97461,-93.08392,"1984-02"],
+  ["80002009","Barnesville City Hall and Jail","Barnesville, Minnesota",46.66329,-96.42036,"1980-05"],
+  ["04000837","Batcher Opera House Block","Staples, Minnesota",46.35737,-94.79412,"2004-08"],
+  ["88000665","Beltrami County Courthouse","Bemidji, Minnesota",47.47403,-94.89499,"1988-05"],
+  ["80001936","Bemidji Carnegie Library","Bemidji, Minnesota",47.47276,-94.87915,"1980-11"],
+  ["08000133","Bergstein, Moritz, Shoddy Mill and Warehouse","Stillwater, Minnesota",45.03639,-92.79289,"2008-03"],
+  ["85001764","Big Stone County Courthouse","Ortonville, Minnesota",45.30448,-96.44417,"1985-08"],
+  ["80001940","Blue Earth County Courthouse","Mankato, Minnesota",44.16372,-93.99954,"1980-07"],
+  ["12000459","Brainerd and Northern Minnesota--Minnesota and International Railway Depot","Pine River, Minnesota",46.71687,-94.40787,"2012-08"],
+  ["80002022","Brainerd Public Library","Brainerd, Minnesota",46.35819,-94.19885,"1980-05"],
+  ["85001762","Browns Valley Carnegie Public Library","Browns Valley, Minnesota",45.64891,-96.82896,"1985-08"],
+  ["82003008","Buckham, Thomas Scott, Memorial Library","Faribault, Minnesota",44.28995,-93.268,"1982-04"],
+  ["88000126","Aberdeen City Hall","Aberdeen, Mississippi",33.82501,-88.54467,"1988-02"],
+  ["90001076","Alabama and Vicksburg Railroad Depot","Newton, Mississippi",32.32031,-89.16243,"1990-07"],
+  ["74001055","Amite County Courthouse","Liberty, Mississippi",31.15767,-90.81066,"1974-04"],
+  ["97001299","Attala County Courthouse and Confederate Monument","Kosciusko, Mississippi",33.05851,-89.59001,"1997-11"],
+  ["84002164","Barq, E., Pop Factory","Biloxi, Mississippi",30.3961,-88.87787,"1984-05"],
+  ["83000957","Brookhaven City Hall","Brookhaven, Mississippi",31.57763,-90.44431,"1983-06"],
+  ["79003385","Carnegie Branch Library","Meridian, Mississippi",32.3696,-88.70642,"1979-12"],
+  ["75001045","Central Fire Station","Jackson, Mississippi",32.29817,-90.18212,"1975-10"],
+  ["69000084","City Hall","Jackson, Mississippi",32.29792,-90.18231,"1969-11"],
+  ["94000511","Clarke County Courthouse and Confederate Monument","Quitman, Mississippi",32.03989,-88.72771,"1994-05"],
+  ["80002199","Coliseum Theatre","Corinth, Mississippi",34.93405,-88.51843,"1980-08"],
+  ["98001336","Copiah County Courthouse","Hazlehurst, Mississippi",31.86013,-90.39703,"1998-11"],
+  ["91001894","Covington County Courthouse","Collins, Mississippi",31.64372,-89.55661,"1991-12"],
+  ["84000045","Depot","Magnolia, Mississippi",31.14414,-90.45785,"1984-10"],
+  ["15000988","Durant Illinois Central Railroad Depot","Durant, Mississippi",33.07374,-89.85321,"2016-01"],
+  ["80002237","Forrest County Courthouse","Hattiesburg, Mississippi",31.32743,-89.2913,"1980-08"],
+  ["81000327","Franklin County Courthouse","Meadville, Mississippi",31.47253,-90.89303,"1981-12"],
+  ["72000696","Grand Opera House","Meridian, Mississippi",32.36399,-88.70047,"1972-12"],
+  ["100008448","ABC Storage & Van Company Warehouse B","Kansas City, Missouri",39.06759,-94.5058,"2022-12"],
+  ["78001636","Adair County Courthouse","Kirksville, Missouri",40.19514,-92.58373,"1978-08"],
+  ["79001398","Administration Building, Missouri State Fruit Experiment Station","Mountain Grove, Missouri",37.1531,-92.26266,"1979-01"],
+  ["90000130","Albany Carnegie Public Library","Albany, Missouri",40.24637,-94.32963,"1990-02"],
+  ["81000336","Alley Spring Roller Mill","Eminence, Missouri",37.15415,-91.44205,"1981-12"],
+  ["83001039","Ambassador Theater Building","St. Louis (Independent City), Missouri",38.62938,-90.19144,"1983-03"],
+  ["85000617","American Theater","St. Louis (Independent City), Missouri",38.63014,-90.19301,"1985-03"],
+  ["80002308","Andrew County Courthouse","Savannah, Missouri",39.94126,-94.82942,"1980-09"],
+  ["08000560","Armour Theatre Building","North Kansas City, Missouri",39.14436,-94.57591,"2008-06"],
+  ["12000434","Audrain County Courthouse","Mexico, Missouri",39.17258,-91.88307,"2012-07"],
+  ["01000684","Bates County Courthouse","Butler, Missouri",38.25772,-94.35542,"2001-06"],
+  ["85000527","Bennett Spring State Park Shelter House and Water Gauge Station","Bennett Spring, Missouri",37.71685,-92.85767,"1985-02"],
+  ["05000811","Beverly Theater","University City, Missouri",38.67195,-90.33745,"2005-08"],
+  ["86003140","Boegel and Hine Flour Mill--Wommack Mill","Fair Grove, Missouri",37.38316,-93.15047,"1986-11"],
+  ["03000652","Bolivar Public Library","Bolivar, Missouri",37.61334,-93.41037,"2003-07"],
+  ["84002606","Bonne Terre Depot","Bonne Terre, Missouri",37.91873,-90.5489,"1984-04"],
+  ["15000354","Broadway Theatre","Cape Girardeau, Missouri",37.30669,-89.5285,"2015-06"],
+  ["80004503","Brown Shoe Company's Homes-Take Factory","St. Louis (Independent City), Missouri",38.60821,-90.21017,"1980-10"],
+  ["98001340","Airway Radio Station","Three Forks, Montana",45.88478,-111.56334,"1998-11"],
+  ["74001099","Alta Ranger Station","Conner, Montana",45.61892,-114.29954,"1974-12"],
+  ["83001078","Antelope Stage Station","Broadview, Montana",46.04386,-108.7322,"1983-01"],
+  ["06000252","Babb--Piegan, Montana, Inspection Station","Babb, Montana",48.99312,-113.38063,"2006-04"],
+  ["13000153","Babcock Theatre Building","Billings, Montana",45.78264,-108.50661,"2013-04"],
+  ["82000592","Belgrade City Hall and Jail","Belgrade, Montana",45.77586,-111.17668,"1982-10"],
+  ["98000125","Big Timber Town Hall","Big Timber, Montana",45.83386,-109.95382,"1998-02"],
+  ["79001402","Bozeman Carnegie Library","Bozeman, Montana",45.68014,-111.03417,"1979-02"],
+  ["87001217","Bridger Opera House","Bridger, Montana",45.2956,-108.91164,"1987-09"],
+  ["86001934","Carnegie Public Library","Havre, Montana",48.54926,-109.67721,"1986-07"],
+  ["02000725","Carnegie Public Library","Big Timber, Montana",45.83239,-109.95261,"2002-07"],
+  ["82003174","Carnegie Public Library","Missoula, Montana",46.87243,-113.99238,"1982-04"],
+  ["80002401","Cascade County Courthouse","Great Falls, Montana",47.50811,-111.30026,"1980-04"],
+  ["88001119","Chicago, Milwaukee and St. Paul Passenger Depot","Great Falls, Montana",47.50682,-111.30888,"1988-10"],
+  ["06000744","Chief Mountain Border Station and Quarters","Babb, Montana",48.99678,-113.66024,"2008-05"],
+  ["80002404","Chouteau County Courthouse","Fort Benton, Montana",47.81754,-110.66548,"1980-09"],
+  ["79003722","City Hall","Anaconda, Montana",46.12932,-112.94825,"1979-08"],
+  ["94000863","Clack, H. Earl, Service Station","Saco, Montana",48.45637,-107.34432,"1994-08"],
+  ["100003569","Albion Carnegie Library","Albion, Nebraska",41.6891,-97.99931,"2019-03"],
+  ["88000951","Allen's Opera House","Cozad, Nebraska",40.85972,-99.98566,"1988-09"],
+  ["100007149","Alma Carnegie Library","Alma, Nebraska",40.09906,-99.36242,"2021-11"],
+  ["79001440","Anheuser-Busch Beer Depot","Omaha, Nebraska",41.25319,-95.93276,"1979-02"],
+  ["80002438","Antelope County Courthouse","Neligh, Nebraska",42.12998,-98.02927,"1980-12"],
+  ["100005056","Arcadia Township Carnegie Library","Arcadia, Nebraska",41.42309,-99.12552,"2020-03"],
+  ["88000930","Army Theatre","Crawford, Nebraska",42.6664,-103.46645,"1988-07"],
+  ["83001102","Ashland Public Library","Ashland, Nebraska",41.04085,-96.36919,"1983-01"],
+  ["74001108","Astro Theater","Omaha, Nebraska",41.25726,-95.94273,"1974-08"],
+  ["93001404","Auld Public Library","Red Cloud, Nebraska",40.09063,-98.51975,"1993-12"],
+  ["76001131","Beatrice City Library","Beatrice, Nebraska",40.26748,-96.74749,"1976-07"],
+  ["98000895","Beebe and Runyan Furniture Showroom and Warehouse","Omaha, Nebraska",41.25917,-95.92766,"1998-07"],
+  ["91001752","Belle Prairie Township Hall & Strang Town Hall--Jail","Strang, Nebraska",40.41404,-97.58729,"1991-11"],
+  ["84002499","Bradshaw Town Hall","Bradshaw, Nebraska",40.88352,-97.74708,"1984-05"],
+  ["80002446","Brandeis-Millard House","Omaha, Nebraska",41.2562,-95.97001,"1980-11"],
+  ["07000654","Brenizer Library","Merna, Nebraska",41.48433,-99.76187,"2007-07"],
+  ["98000193","Broken Bow Carnegie Library","Broken Bow, Nebraska",41.40335,-99.6421,"1998-03"],
+  ["81000376","Burlington Depot","Red Cloud, Nebraska",40.07735,-98.52183,"1981-03"],
+  ["02000820","1938 Lincoln County Courthouse","Pioche, Nevada",37.93701,-114.45099,"2002-07"],
+  ["03000754","Austin City Hall","Austin, Nevada",39.49247,-117.07163,"2003-08"],
+  ["95001224","Baker Ranger Station","Baker, Nevada",39.01466,-114.12384,"1995-10"],
+  ["84002074","Brown's Hall-Thompson's Opera House","Pioche, Nevada",37.93006,-114.45127,"1984-08"],
+  ["97001546","Buckland Station","Stagecoach, Nevada",39.29429,-119.25162,"1997-12"],
+  ["74001146","Caliente Railroad Depot","Caliente, Nevada",37.61246,-114.51499,"1974-03"],
+  ["93000692","Capital Theater","Ely, Nevada",39.24809,-114.8947,"1993-08"],
+  ["79003440","Carson City Post Office","Carson City (Independent City), Nevada",39.16651,-119.76672,"1979-02"],
+  ["04000300","Central Pacific Railroad Depot","Lovelock, Nevada",40.17977,-118.47386,"2004-04"],
+  ["93000691","Central Theater","Ely, Nevada",39.25095,-114.88337,"1993-08"],
+  ["92001258","Churchill County Courthouse","Fallon, Nevada",39.47506,-118.78173,"1992-09"],
+  ["86002266","Douglas County Courthouse","Minden, Nevada",38.95556,-119.76438,"1986-08"],
+  ["84002082","East Ely Depot","East Ely, Nevada",39.25925,-114.86921,"1984-04"],
+  ["92001259","Elko County Courthouse","Elko, Nevada",40.83342,-115.7627,"1992-09"],
+  ["04001197","Fallon City Hall","Fallon, Nevada",39.47449,-118.77776,"2004-10"],
+  ["06000109","Federal Building and Post Office","Fallon, Nevada",39.47595,-118.77664,"2006-03"],
+  ["100006290","Federal Building and U.S. Courthouse","Reno, Nevada",39.51805,-119.82619,"2021-03"],
+  ["05000513","Fernley and Lassen Railway Depot","Fernley, Nevada",39.60574,-119.23768,"2005-06"],
+  ["83004206","Acworth Silsby Library","Acworth, New Hampshire",43.21836,-72.29194,"1983-12"],
+  ["83001124","Alton Bay Railroad Station","Alton, New Hampshire",43.47343,-71.23767,"1983-09"],
+  ["82000617","Ashland Railroad Station","Ashland, New Hampshire",43.69057,-71.63398,"1982-11"],
+  ["83001138","Ashland Town Hall","Ashland, New Hampshire",43.69687,-71.63215,"1983-03"],
+  ["15000664","Bartlett Roundhouse","Bartlett, New Hampshire",44.07668,-71.28732,"2015-09"],
+  ["84000530","Bedford Town Hall","Bedford, New Hampshire",42.94641,-71.51522,"1984-12"],
+  ["71000046","Belknap--Sulloway Mill","Laconia, New Hampshire",43.5276,-71.46857,"1971-01"],
+  ["85002191","Belmont Public Library","Belmont, New Hampshire",43.44362,-71.48211,"1985-09"],
+  ["81000073","Boscawen Public Library","Boscawen, New Hampshire",43.31933,-71.6249,"1981-05"],
+  ["80000293","Bradford Town Hall","Bradford, New Hampshire",43.26933,-71.9611,"1980-11"],
+  ["15000668","Bristol Town Hall","Bristol, New Hampshire",43.59236,-71.73548,"2015-09"],
+  ["85001189","Brookfield Town Hall","Brookfield, New Hampshire",43.56038,-71.06719,"1985-06"],
+  ["71000047","Busiel--Seeburg Mill","Laconia, New Hampshire",43.52744,-71.46867,"1971-01"],
+  ["84003252","Charlestown Town Hall","Charlestown, New Hampshire",43.23542,-72.40288,"1984-03"],
+  ["92000155","Chase, Amos, House and Mill","Weare, New Hampshire",43.10889,-71.7499,"1992-03"],
+  ["78000210","Cheshire County Courthouse","Keene, New Hampshire",42.93443,-72.27954,"1978-12"],
+  ["73000176","Claremont City Hall","Claremont, New Hampshire",43.37249,-72.33693,"1973-04"],
+  ["79000320","Claremont Warehouse No. 34","Claremont, New Hampshire",43.37581,-72.34443,"1979-02"],
+  ["80002504","Allenhurst Railroad Station","Allenhurst, New Jersey",40.23743,-74.00659,"1980-09"],
+  ["78001774","Allentown Mill","Allentown, New Jersey",40.17626,-74.58641,"1978-02"],
+  ["84002628","Ampere Station","East Orange, New Jersey",40.76536,-74.19416,"1984-06"],
+  ["79001480","Avalon Life Saving Station","Avalon, New Jersey",39.10394,-74.71233,"1979-03"],
+  ["77000886","Barron Library","Woodbridge, New Jersey",40.56104,-74.27398,"1977-11"],
+  ["08000174","Belcoville Post Office","Belcoville, New Jersey",39.43911,-74.73294,"2008-03"],
+  ["84002786","Bernardsville Station","Bernardsville, New Jersey",40.71693,-74.57125,"1984-06"],
+  ["84002631","Bloomfield Station","Bloomfield, New Jersey",40.79252,-74.20035,"1984-06"],
+  ["72000804","Boonton Public Library","Boonton, New Jersey",40.9054,-74.41069,"1972-11"],
+  ["84002787","Bound Brook Station","Bound Brook, New Jersey",40.56101,-74.53043,"1984-06"],
+  ["13000976","Bradley Beach Free Public Library","Bradley Beach, New Jersey",40.20243,-74.0158,"2013-12"],
+  ["84002749","Bradley Beach Station","Bradley Beach, New Jersey",40.20375,-74.01872,"1984-06"],
+  ["84002636","Brick Church Station","East Orange, New Jersey",40.76571,-74.21892,"1984-06"],
+  ["14000190","Brook Theater, The","Bound Brook Borough, New Jersey",40.56075,-75.71107,"2014-05"],
+  ["00001525","Budd, J.F., Baby Shoe Factory","Burlington City, New Jersey",40.08066,-74.83916,"2000-12"],
+  ["92001385","Camden Free Public Library Main Building","Camden, New Jersey",39.93746,-75.11783,"1992-10"],
+  ["09001100","Carlton, Theatre, The","Red Bank Borough, New Jersey",40.35102,-74.06958,"2009-12"],
+  ["86003074","Carnegie Library","Montclair, New Jersey",40.81545,-74.22035,"1988-07"],
+  ["87001110","1908 Clovis City Hall and Fire Station","Clovis, New Mexico",34.40106,-103.20099,"1987-07"],
+  ["100010754","Albuquerque Public Library","Albuquerque, New Mexico",35.08338,-106.64243,"2024-08"],
+  ["85002621","AT & SF Roundhouse","Las Vegas, New Mexico",35.58674,-105.21536,"1985-09"],
+  ["78001829","Atchison, Topeka and Santa Fe Railway Depot","Magdalena, New Mexico",34.11791,-107.24387,"1978-12"],
+  ["79001562","Atchison, Topeka, and Santa Fe Railroad Depot","Los Lunas, New Mexico",34.79515,-106.73867,"1979-08"],
+  ["100003676","Belen City Hall","Belen, New Mexico",34.66049,-106.77312,"2019-04"],
+  ["04000981","Branigan, Thomas, Memorial Library","Las Cruces, New Mexico",32.31457,-106.78047,"2004-09"],
+  ["78001818","Cassidy Mill","Cleveland, New Mexico",35.98572,-105.35865,"1978-12"],
+  ["87000892","Chaves County Courthouse","Roswell, New Mexico",33.39701,-104.5218,"1989-02"],
+  ["87002223","Chief Theater","Gallup, New Mexico",35.52693,-108.74417,"1988-05"],
+  ["02001550","Clayton Public Library","Clayton, New Mexico",36.4509,-103.18285,"2002-12"],
+  ["87001111","Clovis Central Fire Station","Clovis, New Mexico",34.4016,-103.20696,"1987-07"],
+  ["87000882","Colfax County Courthouse","Raton, New Mexico",36.90424,-104.441,"1987-06"],
+  ["87000883","Colfax County Courthouse in Springer","Springer, New Mexico",36.49815,-104.59127,"1987-12"],
+  ["87002226","Cotton, C. N., Warehouse","Gallup, New Mexico",35.52785,-108.74547,"1988-01"],
+  ["87000881","Curry County Courthouse","Clovis, New Mexico",34.40523,-103.2058,"1987-06"],
+  ["87000896","De Baca County Courthouse","Fort Sumner, New Mexico",34.47219,-104.24348,"1987-12"],
+  ["85000331","Denver and Rio Grande Western Railway Depot","Aztec, New Mexico",36.82407,-107.99016,"1985-02"],
+  ["75001219","1841 Goshen Courthouse","Goshen, New York",41.40287,-74.32188,"1975-03"],
+  ["100010988","28th Police Precinct Station House","New York, New York",40.79073,-73.94612,"2024-11"],
+  ["100004243","32nd Police Precinct Station House Complex","New York, New York",40.82959,-73.94482,"2019-08"],
+  ["83001639","48th Police Precinct Station","New York, New York",40.84714,-73.89743,"1983-05"],
+  ["82001091","52nd Police Precinct Station House and Stable","New York, New York",40.86921,-73.87914,"1982-10"],
+  ["82003359","68th Police Precinct Station House and Stable","New York, New York",40.65042,-74.0089,"1982-06"],
+  ["07000952","75th Police Precinct Station House","Brooklyn, New York",40.6749,-73.89221,"2007-09"],
+  ["82003360","83rd Precinct Police Station and Stable","New York, New York",40.70164,-73.92307,"1982-04"],
+  ["82001118","Adriance Memorial Library","Poughkeepsie, New York",41.70048,-73.93057,"1982-11"],
+  ["91001726","Akin Free Library","Pawling, New York",41.55911,-73.5488,"1991-11"],
+  ["72000812","Albany City Hall","Albany, New York",42.65183,-73.7546,"1972-09"],
+  ["71000516","Albany Union Station","Albany, New York",42.65141,-73.74948,"1971-02"],
+  ["10000026","Alling & Cory Buffalo Warehouse","Buffalo, New York",42.88492,-78.86938,"2010-02"],
+  ["100002743","Amagansett U.S. Life-Saving and Coast Guard Station","Amagansett, New York",40.97042,-72.12527,"2018-07"],
+  ["100008717","Amphion Piano Player Factory","Syracuse, New York",43.05846,-76.1575,"2023-03"],
+  ["00001687","Amsterdam City Hall","Amsterdam, New York",42.9393,-74.262,"2001-02"],
+  ["100004800","Amsterdam Free Library","Amsterdam, New York",42.93765,-74.19089,"2019-12"],
+  ["83004059","Apollo Theater","New York, New York",40.81015,-73.94973,"1983-11"],
+  ["14000496","Acme-McCrary Hosiery Mills","Asheboro, North Carolina",35.70693,-79.81542,"2014-08"],
+  ["79001655","Alamance County Courthouse,","Graham, North Carolina",36.06927,-79.40027,"1979-05"],
+  ["07000821","Alamance Mill Village Historic District","Alamance, North Carolina",36.04212,-79.48721,"2007-08"],
+  ["79001657","Alleghany County Courthouse","Sparta, North Carolina",36.50596,-81.12063,"1979-05"],
+  ["84000301","Altamahaw Mill Office","Altamahaw, North Carolina",36.18397,-79.50714,"1984-11"],
+  ["82003509","Andrew Carnegie Library","Salisbury, North Carolina",35.6709,-80.48379,"1982-05"],
+  ["85003077","Apex City Hall","Apex, North Carolina",35.73257,-78.85068,"1985-12"],
+  ["88002697","Apex Union Depot","Apex, North Carolina",35.73211,-78.85014,"1988-12"],
+  ["79001658","Ashe County Courthouse","Jefferson, North Carolina",36.42107,-81.47022,"1979-05"],
+  ["11000891","Asheboro Hosiery Mills and Cranford Furniture Company Complex","Asheboro, North Carolina",35.7041,-79.81679,"2011-12"],
+  ["76001307","Asheville City Hall","Asheville, North Carolina",35.59571,-82.54834,"1976-11"],
+  ["89001768","Atlantic and North Carolina Railroad Freight Depot","Kinston, North Carolina",35.26322,-77.57985,"1989-11"],
+  ["82001294","Atlantic Coast Line Railroad Station","Fayetteville, North Carolina",35.05516,-78.88439,"1982-07"],
+  ["100007592","Aurora Cotton Mills Finishing Plant-Baker-Cammack Hosiery Mills Plant","Burlington, North Carolina",36.08685,-79.42941,"2022-04"],
+  ["79001660","Avery County Courthouse","Newland, North Carolina",36.08681,-81.92673,"1979-05"],
+  ["75001242","Bald Head Island Lighthouse","Southport, North Carolina",33.8735,-78.00055,"1975-04"],
+  ["97001221","Beam's Shell Service Station and Office, (Former)","Cherryville, North Carolina",35.37984,-81.37986,"1997-10"],
+  ["71000567","Beaufort County Courthouse","Washington, North Carolina",35.54323,-77.05429,"1971-03"],
+  ["85002977","Adams County Courthouse","Hettinger, North Dakota",46.00153,-102.63487,"1985-11"],
+  ["90002191","Avalon Theater","Larimore, North Dakota",47.90518,-97.62401,"1991-02"],
+  ["85002978","Barnes County Courthouse","Valley City, North Dakota",46.92717,-98.00538,"1985-11"],
+  ["78001988","Benson County Courthouse","Minnewaukan, North Dakota",48.06899,-99.25022,"1978-11"],
+  ["77001016","Billings County Courthouse","Medora, North Dakota",46.91285,-103.52261,"1977-12"],
+  ["85002979","Burke County Courthouse","Bowbells, North Dakota",48.80087,-102.24859,"1985-11"],
+  ["85002980","Burleigh County Courthouse","Bismarck, North Dakota",46.80787,-100.78391,"1985-11"],
+  ["80002915","Carson Roller Mill","Carson, North Dakota",46.41834,-101.56432,"1980-04"],
+  ["83004062","Cass County Courthouse","Fargo, North Dakota",46.87196,-96.79351,"1983-12"],
+  ["85002831","Delchar Theater","Mayville, North Dakota",47.50027,-97.32712,"1985-11"],
+  ["02000132","Devils Lake Carnegie Library","Devils Lake, North Dakota",48.11462,-98.86054,"2002-03"],
+  ["80004283","Dickey County Courthouse","Ellendale, North Dakota",46.00411,-98.52381,"1980-11"],
+  ["80004545","Dickey, Alfred E., Free Library","Jamestown, North Dakota",46.90652,-98.7081,"1980-07"],
+  ["08000735","Dickinson (Carnegie Area) Public Library","Dickinson, North Dakota",46.88377,-102.78844,"2008-07"],
+  ["80002910","Divide County Courthouse","Crosby, North Dakota",48.91531,-103.29436,"1980-11"],
+  ["85002981","Eddy County Courthouse","New Rockford, North Dakota",47.68041,-99.13456,"1985-11"],
+  ["92000354","Ellendale Opera House Block","Ellendale, North Dakota",46.00166,-98.52874,"1992-04"],
+  ["85002982","Emmons County Courthouse","Linton, North Dakota",46.26696,-100.23688,"1985-11"],
+  ["98001014","Ada Pennsylvania Station and Railroad Park","Ada, Ohio",40.77053,-83.82221,"1998-08"],
+  ["12000391","Adams Bag Company Paper Mill and Sack Factory","Chagrin Falls, Ohio",41.4353,-81.3856,"2012-07"],
+  ["83002059","Akron Post Office and Federal Building","Akron, Ohio",41.08345,-81.51342,"1983-05"],
+  ["83002060","Akron Public Library","Akron, Ohio",41.08498,-81.51439,"1983-01"],
+  ["74001392","Allen County Courthouse","Lima, Ohio",40.74298,-84.10553,"1974-07"],
+  ["82001365","Allen Memorial Medical Library","Cleveland, Ohio",41.50608,-81.60842,"1982-11"],
+  ["05001143","Alta Public Library","Cleveland, Ohio",41.50822,-81.59586,"2005-10"],
+  ["75001459","Amherst Town Hall","Amherst, Ohio",41.39845,-82.22721,"1975-05"],
+  ["78002187","Anna Town Hall","Anna, Ohio",40.39497,-84.17575,"1978-09"],
+  ["80003205","Antwerp Norfolk and Western Depot","Antwerp, Ohio",41.17895,-84.7479,"1980-09"],
+  ["79003786","Ashland County Courthouse","Ashland, Ohio",40.86943,-82.31731,"1979-12"],
+  ["100004053","Ashtabula Post Office and Federal Building","Ashtabula, Ohio",41.86514,-80.78137,"2019-06"],
+  ["80003209","Ashville Depot","Ashville, Ohio",39.71502,-82.95536,"1980-02"],
+  ["83001944","Athens B & O Train Depot","Athens, Ohio",39.32906,-82.10576,"1983-01"],
+  ["73001387","Auglaize County Courthouse","Wapakoneta, Ohio",40.56834,-84.19435,"1973-05"],
+  ["84000211","Augspurger Grist Mill","Woodsdale, Ohio",39.4302,-84.47719,"1984-11"],
+  ["86001131","Aurora Train Station","Aurora, Ohio",41.30769,-81.33312,"1986-05"],
+  ["85001694","Barnesville Baltimore and Ohio Railroad Depot","Barnesville, Ohio",39.9887,-81.17318,"1985-08"],
+  ["89001950","Ada Public Library","Ada, Oklahoma",34.77117,-96.67676,"1989-11"],
+  ["84002927","Adair County Courthouse","Stilwell, Oklahoma",35.81429,-94.62888,"1984-08"],
+  ["84002937","Alfalfa County Courthouse","Cherokee, Oklahoma",36.75517,-98.35653,"1984-08"],
+  ["100010049","Altus Junior College Library","Altus, Oklahoma",34.6395,-99.31707,"2024-03"],
+  ["80003298","Antlers Frisco Depot and Antlers Spring","Antlers, Oklahoma",34.23002,-95.62085,"1980-06"],
+  ["00000620","Ardmore Carnegie Library","Ardmore, Oklahoma",34.1708,-97.13549,"2000-06"],
+  ["04000131","Avant's Cities Service Station","El Reno, Oklahoma",35.53152,-97.95502,"2004-03"],
+  ["84002964","Beaver County Courthouse","Beaver City, Oklahoma",36.81596,-100.52153,"1984-08"],
+  ["84002968","Beckham County Courthouse","Sayre, Oklahoma",35.29149,-99.63658,"1984-08"],
+  ["01000071","Bizzell Library, University of Oklahoma","Norman, Oklahoma",35.20753,-97.44604,"2001-01"],
+  ["84002978","Black Theater of Ardmore","Ardmore, Oklahoma",34.17043,-97.12303,"1984-06"],
+  ["84002972","Blaine County Courthouse","Watonga, Oklahoma",35.84624,-98.41101,"1984-08"],
+  ["03001239","Bridgeport Hill Service Station","Geary, Oklahoma",36.05504,-95.79139,"2003-12"],
+  ["07000912","Bristow Firestone Service Station","Bristow, Oklahoma",35.83553,-96.39061,"2007-09"],
+  ["84002974","Bryan County Courthouse","Durant, Oklahoma",33.99285,-96.38145,"1984-08"],
+  ["79002022","Busby Theatre","McAlester, Oklahoma",34.93363,-95.76686,"1979-12"],
+  ["04001336","Campus Fire Station","Stillwater, Oklahoma",36.12004,-97.06528,"2004-12"],
+  ["94001611","Canute Service Station","Canute, Oklahoma",35.42169,-99.28059,"1995-02"],
+  ["80003338","Albany Custom Mill","Albany, Oregon",44.63805,-123.1075,"1980-02"],
+  ["84000480","Albers Brothers Milling Company","Portland, Oregon",45.53116,-122.67592,"1984-11"],
+  ["100010118","Alger Theatre","Lakeview, Oregon",42.18902,-120.34622,"2024-03"],
+  ["80003314","Allison Ranger Station","Burns, Oregon",43.91097,-119.60322,"1980-09"],
+  ["91000166","Antlers Guard Station","Whitney, Oregon",44.63339,-118.27898,"1991-03"],
+  ["16000088","Arleta Branch Library","Portland, Oregon",45.49048,-122.59708,"2016-03"],
+  ["91000047","Ashland Depot Hotel, South Wing","Ashland, Oregon",42.19778,-122.70561,"1991-02"],
+  ["87001563","Ashland Municipal Powerhouse","Ashland, Oregon",42.16893,-122.71392,"1987-09"],
+  ["84002940","Astoria City Hall","Astoria, Oregon",46.18829,-123.83848,"1984-09"],
+  ["84002949","Astoria Wharf and Warehouse Company","Astoria, Oregon",46.19175,-123.83925,"1984-06"],
+  ["99001088","Bagby Guard Station","Estacada, Oregon",44.9347,-122.17351,"1999-09"],
+  ["89000099","Bagdad Theatre","Portland, Oregon",45.51156,-122.62547,"1989-03"],
+  ["87001558","Bell Station Store","Portland, Oregon",45.45574,-122.59258,"1987-09"],
+  ["78002278","Benton County Courthouse","Corvallis, Oregon",44.56556,-123.26188,"1978-01"],
+  ["00000462","Big Elk Guard Station","Ashland, Oregon",42.35883,-122.35781,"2000-12"],
+  ["91000161","Billy Meadows Guard Station","Joseph, Oregon",45.82945,-117.04316,"1991-03"],
+  ["79002117","Boston Flour Mill","Shedd, Oregon",44.46117,-123.08103,"1979-08"],
+  ["11001065","Buchanan Cellers Mill","McMinnville, Oregon",45.21157,-123.18951,"2012-01"],
+  ["71000702","1724 Chester Courthouse","Chester, Pennsylvania",39.84781,-75.36002,"1971-05"],
+  ["84003550","26th District Police and Patrol Station","Philadelphia, Pennsylvania",39.98087,-75.12927,"1984-07"],
+  ["74001728","Adams County Courthouse","Gettysburg, Pennsylvania",39.82954,-77.23221,"1974-10"],
+  ["15000973","Albion Carpet Mill","Philadelphia, Pennsylvania",39.98611,-75.13014,"2016-01"],
+  ["71000683","Allegheny Post Office","Pittsburgh, Pennsylvania",40.45271,-80.00693,"1971-07"],
+  ["90000399","Andrews, H. O., Feed Mill","Union, Pennsylvania",40.39527,-77.9428,"1990-03"],
+  ["78002442","Arch Street Opera House","Philadelphia, Pennsylvania",39.95372,-75.15649,"1978-06"],
+  ["81000526","Armstrong County Courthouse and Jail","Kittanning, Pennsylvania",40.81635,-79.51634,"1981-11"],
+  ["91000090","Ashley and Bailey Company Silk Mill","West York Borough, Pennsylvania",39.95212,-76.75049,"1991-02"],
+  ["80003533","Ashley and Bailey Silk Mill","Marietta, Pennsylvania",40.05934,-76.54712,"1980-06"],
+  ["85000035","B.F. Good & Company Leaf Tobacco Warehouse","Lancaster, Pennsylvania",40.0358,-76.30842,"1985-01"],
+  ["79002252","Bachman and Forry Tobacco Warehouse","Columbia, Pennsylvania",40.02947,-76.50331,"1979-03"],
+  ["90001399","Basch & Fisher Tobacco Warehouse","Lancaster, Pennsylvania",40.04401,-76.29896,"1990-09"],
+  ["04000881","Beatty's Mills Factory Building","Philadelphia, Pennsylvania",39.98448,-75.12822,"2004-08"],
+  ["86003578","Beaver, Thomas, Free Library and Danville YMCA","Danville, Pennsylvania",40.9602,-76.60598,"1987-01"],
+  ["10000407","Bellemonte Silk Mill","Hawley, Pennsylvania",41.47175,-75.17207,"2010-06"],
+  ["100006880","Bellevue Worsted Mills","Philadelphia, Pennsylvania",40.03724,-75.15942,"2021-09"],
+  ["14000468","Berger, John & Son, Company Tobacco Warehouse","East Hempfield Township, Pennsylvania",40.0981,-76.41359,"2014-08"],
+  ["72000033","Allenville Mill","Esmond, Rhode Island",41.87823,-71.50202,"1972-01"],
+  ["100001779","Angell, Otis, Gristmill","North Providence, Rhode Island",41.87052,-71.46112,"2017-11"],
+  ["06000299","Beaman and Smith Company Mill","Providence, Rhode Island",41.80835,-71.41741,"2006-04"],
+  ["05000585","Bernon Worsted Mill","Woonsocket, Rhode Island",41.99396,-71.51328,"2005-06"],
+  ["01000018","Boyd's Windmill","Middletown, Rhode Island",41.50085,-71.26866,"2001-01"],
+  ["83003805","Bridge Mill Power Plant","Pawtucket, Rhode Island",41.87642,-71.38385,"1983-11"],
+  ["70000011","Bristol County Courthouse","Bristol, Rhode Island",41.66337,-71.27088,"1970-04"],
+  ["72000015","Bristol Customshouse and Post Office","Bristol, Rhode Island",41.66621,-71.27477,"1972-05"],
+  ["70000083","Casino Theatre, Newport Casino","Newport, Rhode Island",41.48263,-71.30621,"1970-12"],
+  ["78000062","Crompton Free Library","West Warwick, Rhode Island",41.68502,-71.52358,"1978-11"],
+  ["79000055","Dyerville Mill","Providence, Rhode Island",41.82651,-71.46123,"1979-06"],
+  ["07000265","Earnscliffe Woolen--Paragon Worsted Company Mill Complex","Providence, Rhode Island",41.81807,-71.44357,"2007-04"],
+  ["88003103","Ernest Street Sewage Pumping Station","Providence, Rhode Island",41.795,-71.3972,"1989-01"],
+  ["83003819","Fire Station  No. 4","Pawtucket, Rhode Island",41.88649,-71.37603,"1983-11"],
+  ["89000409","Glenark Mills","Woonsocket, Rhode Island",41.99836,-71.51855,"1989-05"],
+  ["06001151","Greenwich Mills","Warwick, Rhode Island",41.66709,-71.44738,"2006-12"],
+  ["82000139","Hanora Mills","Woonsocket, Rhode Island",42.00068,-71.51575,"1982-11"],
+  ["76000047","Harris Warehouse","Woonsocket, Rhode Island",42.00404,-71.51443,"1976-07"],
+  ["81000706","Abbeville County Courthouse","Abbeville, South Carolina",34.17772,-82.37815,"1981-10"],
+  ["70000558","Abbeville Opera House","Abbeville, South Carolina",34.17789,-82.37818,"1970-07"],
+  ["06000580","Allendale County Courthouse","Allendale, South Carolina",33.01298,-81.30608,"2007-08"],
+  ["82003853","American Cigar Factory","Greenville, South Carolina",34.84846,-82.39881,"1982-07"],
+  ["78002529","Anderson's Mill","Spartanburg, South Carolina",34.88323,-82.01148,"1978-11"],
+  ["86003839","Atlantic Coast Line Railroad Depot","Conway, South Carolina",33.83833,-79.04302,"1995-05"],
+  ["05001099","Bamberg City Hall","Bamberg, South Carolina",33.2965,-81.0351,"2005-09"],
+  ["07000074","Bamberg Post Office","Bamberg, South Carolina",33.29626,-81.03381,"2007-05"],
+  ["79002373","Belton Depot","Belton, South Carolina",34.52252,-82.49466,"1979-08"],
+  ["14000317","Brandon Mill","Greenville, South Carolina",34.84433,-82.43202,"2014-09"],
+  ["82003868","Buck's Upper Mill Farm","Bucksville, South Carolina",33.73892,-79.06315,"1982-03"],
+  ["81000561","Calhoun County Courthouse","St. Matthews, South Carolina",33.6632,-80.77926,"1981-10"],
+  ["75001690","Calhoun County Library","St. Matthews, South Carolina",33.66703,-80.77438,"1975-05"],
+  ["00000587","Carnegie Free Library","Gaffney, South Carolina",35.0738,-81.64825,"2000-06"],
+  ["94000814","Carnegie Public Library","Sumter, South Carolina",33.92084,-80.34616,"1994-08"],
+  ["80003668","Carnegie Public Library","Darlington, South Carolina",34.30587,-79.87268,"1980-09"],
+  ["03000658","Carver Theatre","Columbia, South Carolina",34.01034,-81.02147,"2003-07"],
+  ["13000454","Central Roller Mills","Central, South Carolina",34.7266,-82.78473,"2013-06"],
+  ["02001285","Armory, Old, --Vermillion","Vermillion, South Dakota",42.78417,-96.92516,"2002-10"],
+  ["92001855","Aurora County Courthouse","Plankinton, South Dakota",43.71767,-98.48544,"1993-02"],
+  ["77001243","Beebe, Marcus P., Library","Ipswich, South Dakota",45.43747,-99.02568,"1977-11"],
+  ["04000764","Big Stone City Hall","Big Stone City, South Dakota",45.29359,-96.46357,"2004-07"],
+  ["84000581","Bon Homme County Courthouse","Tyndall, South Dakota",42.99384,-97.86601,"1984-12"],
+  ["82003914","Brookings City Hall","Brookings, South Dakota",44.30885,-96.79947,"1982-06"],
+  ["76001715","Brookings County Courthouse","Brookings, South Dakota",44.30878,-96.79559,"1976-12"],
+  ["76001718","Brown County Courthouse","Aberdeen, South Dakota",45.46454,-98.48655,"1976-06"],
+  ["78002573","Brown, A. H., Public Library","Mobridge, South Dakota",45.53808,-100.43427,"1978-12"],
+  ["98001398","Butte County Courthouse amd Historic Jail Building","Belle Fourche, South Dakota",44.67,-103.8154,"1998-12"],
+  ["76001724","Carnegie Free Public Library","Watertown, South Dakota",44.89901,-97.11348,"1976-06"],
+  ["73001750","Carnegie Free Public Library","Sioux Falls, South Dakota",43.82507,-96.71026,"1973-03"],
+  ["86000247","Carnegie Public Library","Dell Rapids, South Dakota",43.82507,-96.71026,"1986-02"],
+  ["80003717","Carnegie Public Library","Brookings, South Dakota",44.30878,-96.79572,"1980-05"],
+  ["84000582","Carnegie Public Library of Tyndall","Tyndall, South Dakota",42.99246,-97.86371,"1984-12"],
+  ["80003730","Central Fire Station","Sioux Falls, South Dakota",43.54696,-96.7311,"1980-05"],
+  ["92001856","Charles Mix County Courthouse","Lake Andes, South Dakota",43.15557,-98.53815,"1993-02"],
+  ["98001411","Chicago and North Western Roundhouse","Huron, South Dakota",44.36585,-98.20621,"1998-11"],
+  ["78002579","Administration Building- Erastus Milo Cravath Library","Nashville, Tennessee",36.16708,-86.80455,"1978-02"],
+  ["04000198","Airplane Service Station","Knoxville, Tennessee",36.00942,-84.03121,"2004-03"],
+  ["92000411","Bear Creek Road Checking Station","Oak Ridge, Tennessee",35.99941,-84.24292,"1992-05"],
+  ["84003606","Belfast Railroad Depot","Belfast, Tennessee",35.41996,-86.70193,"1984-08"],
+  ["92000410","Bethel Valley Road Checking Station","Oak Ridge, Tennessee",35.9871,-84.21717,"1992-05"],
+  ["95000346","Bledsoe County Courthouse","Pikesville, Tennessee",35.6057,-85.18855,"1995-03"],
+  ["13000122","Bodenham Mill","Pulaski, Tennessee",35.2352,-87.15575,"2013-03"],
+  ["80003858","Brister, John Willard, Library","Memphis, Tennessee",35.11811,-89.93997,"1980-07"],
+  ["100002752","Brownsville Carnegie Library","Brownsville, Tennessee",35.59406,-89.26364,"2018-07"],
+  ["82003979","Burwell Building Tennessee Theater","Knoxville, Tennessee",35.96441,-83.91694,"1982-04"],
+  ["92000347","Cannon County Courthouse","Woodbury, Tennessee",35.82834,-86.07069,"1992-04"],
+  ["99000363","Capitol Theatre","Union City, Tennessee",36.42531,-89.05675,"1999-03"],
+  ["85003769","Carnegie Library","Nashville, Tennessee",36.16798,-86.80503,"1985-01"],
+  ["08000238","Carolina, Clinchfield & Ohio Railroad Station and Depot","Johnson City, Tennessee",36.31435,-82.35268,"2008-03"],
+  ["76001769","Cheatham County Courthouse","Ashland City, Tennessee",36.27477,-87.06358,"1976-12"],
+  ["79002418","Chester County Courthouse","Henderson, Tennessee",35.4401,-88.64085,"1979-03"],
+  ["87002007","Clarksville Foundry and Machine Works Office","Clarksville, Tennessee",36.52568,-87.36124,"1987-11"],
+  ["77001261","Clay County Courthouse","Celina, Tennessee",36.55051,-85.50604,"1977-09"],
+  ["04000230","1911 Kinney County Courthouse","Brackettville, Texas",29.31364,-100.41779,"2004-03"],
+  ["92000225","1915 Taylor County Courthouse","Abilene, Texas",32.44648,-99.73315,"1992-03"],
+  ["92000191","Abilene and Northern Railway Company Depot","Abilene, Texas",32.44741,-99.72954,"2004-05"],
+  ["92000200","Abilene Fire Station No. 2","Abilene, Texas",32.44502,-99.73718,"1992-03"],
+  ["100003467","Alvin Gulf, Colorado and Santa Fe Railway Passenger Depot","Alvin, Texas",29.42459,-95.24315,"2019-03"],
+  ["00001175","Amarillo US Post Office and Courthouse","Amarillo, Texas",35.20866,-101.83468,"2000-09"],
+  ["92001256","Anderson County Courthouse","Palestine, Texas",31.76478,-95.62607,"1992-09"],
+  ["77001424","Archer County Courthouse and Jail","Archer City, Texas",33.59509,-98.62506,"1977-12"],
+  ["00000188","Arlington Post Office","Arlington, Texas",32.73637,-97.10854,"2000-03"],
+  ["97001598","Atascosa County Courthouse","Jourdanton, Texas",28.91979,-98.54604,"1997-12"],
+  ["03000326","Atchison, Topeka and Santa Fe Railway Depot, Panhandle","Panhandle, Texas",35.34109,-101.37781,"2003-04"],
+  ["00000454","Austin Central Fire Station #1","Austin, Texas",30.26591,-97.73931,"2000-05"],
+  ["100009378","Austin Central Library","Austin, Texas",30.27127,-97.74602,"2023-09"],
+  ["100009510","Austin County Courthouse","Bellville, Texas",29.95037,-96.25738,"2023-11"],
+  ["93000389","Austin Public Library","Austin, Texas",30.27157,-97.74589,"1993-05"],
+  ["01000432","Austin US Courthouse","Austin, Texas",30.27051,-97.74367,"2001-04"],
+  ["92001403","Aztec Theater","San Antonio, Texas",29.42466,-98.49103,"1992-10"],
+  ["75002002","Ballinger Carnegie Library","Ballinger, Texas",31.73994,-99.95016,"1975-06"],
+  ["91001820","Alpine City Hall","Alpine, Utah",40.45334,-111.77734,"1991-12"],
+  ["94000298","American Fork City Hall","American Fork, Utah",40.37311,-111.79798,"1994-04"],
+  ["83004391","Beaver City Library","Beaver, Utah",38.27321,-112.64209,"1983-04"],
+  ["70000622","Beaver County Courthouse","Beaver, Utah",38.27687,-112.64109,"1970-10"],
+  ["82004078","Beaver Opera House","Beaver, Utah",38.27459,-112.64041,"1982-02"],
+  ["72001260","Benson Mill","Mills Junction, Utah",40.65078,-112.29717,"1972-04"],
+  ["88000399","Box Elder County Courthouse","Brigham City, Utah",41.5104,-112.01501,"1988-04"],
+  ["84000143","Brigham City Carnegie Library","Brigham City, Utah",41.51067,-112.0149,"1984-10"],
+  ["88000389","Brigham City Fire Station/City Hall","Brigham City, Utah",41.51067,-112.01538,"1988-04"],
+  ["100000511","Callister, Thomas Clark and Millie, House","Fillmore, Utah",38.96572,-112.32055,"2017-01"],
+  ["89001416","Casino Theatre","Gunnison, Utah",39.15399,-111.81852,"1989-09"],
+  ["84002184","Cedar City Railroad Depot","Cedar City, Utah",37.68137,-113.06207,"1984-08"],
+  ["82004136","Central Warehouse","Salt Lake City, Utah",40.7651,-111.90643,"1982-08"],
+  ["80003918","Chapman Branch Library","Salt Lake City, Utah",40.75655,-111.91674,"1980-01"],
+  ["70000627","Chase, Isaac, Mill","Salt Lake City, Utah",40.74327,-111.8744,"1970-06"],
+  ["75001815","Denver and Rio Grande Railroad Station","Salt Lake City, Utah",40.76286,-111.90475,"1975-09"],
+  ["72001263","Deseret Telegraph and Post Office","Rockville, Utah",37.16081,-113.04356,"1972-02"],
+  ["86003711","East Entrance Checking Station","Springdale, Utah",37.23369,-112.869,"1987-02"],
+  ["14001141","Abbott Memorial Library","Pomfret, Vermont",43.66512,-72.53922,"2015-01"],
+  ["88002162","Adams Gristmill Warehouse","Rockingham, Vermont",43.13215,-72.45452,"1990-01"],
+  ["100007574","Addison Town Hall","Addison, Vermont",44.0889,-73.30286,"2022-04"],
+  ["15000961","Aldrich Public Library","Barre, Vermont",44.19766,-72.50088,"2016-01"],
+  ["73000198","Barre City Hall and Opera House","Barre, Vermont",44.19688,-72.50229,"1973-01"],
+  ["78000239","Baxter, H. H., Memorial Library","Rutland, Vermont",43.6123,-72.9809,"1978-08"],
+  ["76000137","Bennington Post Office","Bennington, Vermont",42.87566,-73.19694,"1976-12"],
+  ["88001301","Bennington Railroad Station","Bennington, Vermont",42.88182,-73.19896,"1988-11"],
+  ["76000199","Bethel Town Hall","Bethel, Vermont",43.8327,-72.63358,"1976-09"],
+  ["76002240","Bridgewater Woolen Mill","Bridgewater, Vermont",43.58718,-72.62054,"1976-07"],
+  ["76000138","Carnegie Building of the Fletcher Free Library","Burlington, Vermont",44.4771,-73.21034,"1976-08"],
+  ["75000145","Central Vermont Railway Depot","Northfield, Vermont",44.14864,-72.658,"1975-04"],
+  ["86001035","Cornwall Town Hall","Cornwall, Vermont",43.96151,-73.21404,"1986-05"],
+  ["96000388","Cotton Free Library","Weybridge, Vermont",44.06503,-73.21543,"1996-04"],
+  ["79000226","Crowley Cheese Factory","Healdville, Vermont",43.42394,-72.78643,"1979-10"],
+  ["88001466","Dover Town Hall","Dover, Vermont",42.94386,-72.80187,"1988-09"],
+  ["99000262","East Clarendon Railroad Station","Clarendon, Vermont",43.52618,-72.93279,"1999-03"],
+  ["94001448","Ely Boston & Maine Railroad Depot","Fairlee, Vermont",43.87354,-72.17745,"1994-12"],
+  ["84003491","Alexandria City Hall","Alexandria (Independent City), Virginia",38.80508,-77.04323,"1984-03"],
+  ["13000044","Alexandria Union Station","Alexandria (Independent City), Virginia",38.80637,-77.06261,"2013-02"],
+  ["82001798","Armstrong Knitting Factory","Charlottesville (Independent City), Virginia",38.03577,-78.48412,"1982-10"],
+  ["82004575","Attucks Theatre","Norfolk (Independent City), Virginia",36.85643,-76.27878,"1982-09"],
+  ["82001826","Augusta County Courthouse","Staunton (Independent City), Virginia",38.14862,-79.07224,"1982-10"],
+  ["00001434","Beacon Theatre","Hopewell (Independent City), Virginia",37.30472,-77.28723,"2000-11"],
+  ["88002060","Beaverdam Depot","Beaverdam, Virginia",37.94109,-77.65374,"1988-11"],
+  ["72001411","Beverley Mill","Plains, Virginia",38.82457,-77.71044,"1972-02"],
+  ["98001314","Big Otter Mill","Bedford, Virginia",37.39092,-79.50366,"1998-10"],
+  ["100001042","Boones Mill Depot","Boones Mill, Virginia",37.11586,-79.94732,"2017-06"],
+  ["80004172","Breckinridge Mill","Fincastle, Virginia",37.49875,-79.91079,"1980-07"],
+  ["02000588","Breckinridge Mill Complex (Boundary Increase)","Fincastle, Virginia",37.49875,-79.91079,"2002-05"],
+  ["06000325","Breneman--Turner Mill","Harrisonburg, Virginia",38.5253,-78.87504,"2006-04"],
+  ["89001060","Brentsville Courthouse and Jail","Brentsville, Virginia",38.68979,-77.50014,"1989-08"],
+  ["80004173","Bristol Railroad Station","Bristol (Independent City), Virginia",36.59563,-82.17952,"1980-11"],
+  ["72001518","Broad Street Station","Richmond (Independent City), Virginia",37.56139,-77.46565,"1972-02"],
+  ["95001557","Brooklyn Store and Post Office","Brooklyn, Virginia",36.67712,-79.15099,"1996-01"],
+  ["95001559","Brooklyn Tobacco Factory","Brooklyn, Virginia",36.67946,-79.14489,"1996-01"],
+  ["97001673","Agen Warehouse","Seattle, Washington",47.60563,-122.33875,"1998-01"],
+  ["02000247","Albers Brothers Mill","Tacoma, Washington",47.24547,-122.4341,"2002-03"],
+  ["77001357","Anacortes Public Library","Anacortes, Washington",48.51532,-122.61774,"1977-10"],
+  ["00000407","Auburn Post Office","Aburn, Washington",47.30802,-122.22758,"2000-04"],
+  ["82004221","Auburn Public Library","Auburn, Washington",47.30924,-122.22835,"1982-08"],
+  ["100004346","Bachtold Building-Interurban Depot","Walla Walla, Washington",46.0649,-118.34456,"2019-08"],
+  ["88003462","Backus--Marblemount Ranger Station House No. 1009","Marblemount, Washington",48.54016,-121.45005,"1989-02"],
+  ["88003463","Backus--Marblemount Ranger Station House No. 1010","Marblemount, Washington",48.54104,-121.44867,"1989-02"],
+  ["79002535","Ballard Carnegie Library","Seattle, Washington",47.66883,-122.38285,"1979-06"],
+  ["78002788","Barron, J. C., Flour Mill","Oakesdale, Washington",47.13016,-117.24191,"1978-02"],
+  ["11000987","Bellingham City Hall","Bellingham, Washington",48.75526,-122.47881,"2011-12"],
+  ["76001869","Benton County Courthouse","Prosser, Washington",46.20337,-119.77046,"1976-12"],
+  ["09001235","Blue Mouse Theatre","Tacoma, Washington",47.27144,-122.48975,"2010-01"],
+  ["88003458","Bridge Creek Cabin--Ranger Station","Stehekin, Washington",48.43034,-120.87207,"1989-02"],
+  ["82004286","Burlington Carnegie Library","Burlington, Washington",48.47564,-122.32307,"1982-08"],
+  ["74001967","Burlington Northern Depot","Chehalis, Washington",46.6714,-122.97248,"1974-11"],
+  ["89000213","Cambern Dutch Shop Windmill","Spokane, Washington",47.64508,-117.38995,"1989-03"],
+  ["73001895","Capitol Theatre","Yakima, Washington",46.60235,-120.50229,"1973-04"],
+  ["79002569","Apollo Theatre","Martinsburg, West Virginia",39.45824,-77.96229,"1979-10"],
+  ["73001897","Baltimore and Ohio Railroad Depot","Huntington, West Virginia",38.42346,-82.44235,"1973-10"],
+  ["80004014","Barbour County Courthouse","Philippi, West Virginia",39.15254,-80.03925,"1980-02"],
+  ["01000776","Beaver Mill","Craigsville, West Virginia",38.32899,-80.66507,"2001-07"],
+  ["00001313","Berkeley Springs Train Depot","Berkeley Springs, West Virginia",39.63131,-78.22422,"2001-03"],
+  ["04000915","Boggs Mill","Seneca Rocks, West Virginia",38.81919,-79.38573,"2004-08"],
+  ["81000596","Boone County Courthouse","Madison, West Virginia",38.06656,-81.81881,"1981-04"],
+  ["82004313","Cabell County Courthouse","Huntington, West Virginia",38.41972,-82.44617,"1982-09"],
+  ["79002597","Capitol Theater","Wheeling, West Virginia",40.07007,-80.72441,"1979-12"],
+  ["82001769","Carnegie Library","Parkersburg, West Virginia",39.26568,-81.55589,"1982-10"],
+  ["80004015","Carnegie Public Library","Huntington, West Virginia",38.41994,-82.4432,"1980-04"],
+  ["88000639","Charleston City Hall","Charleston, West Virginia",38.35067,-81.63866,"1988-06"],
+  ["84000782","Chesapeake and Ohio Depot","Charleston, West Virginia",38.34635,-81.63805,"1984-10"],
+  ["01000775","Cooper's Mill","Jumping Branch, West Virginia",37.60606,-80.97772,"2001-07"],
+  ["79002602","Cottrill Opera House","Thomas, West Virginia",39.1505,-79.49775,"1979-08"],
+  ["87001173","Day--Vandevander Mill","Harmon, West Virginia",38.93264,-79.52166,"1987-07"],
+  ["82004316","Doddridge County Courthouse","West Union, West Virginia",39.29428,-80.77439,"1982-03"],
+  ["07000780","Duffields Depot","Shenandoah Junction, West Virginia",39.36467,-77.8253,"2007-08"],
+  ["74000122","A. D. German Warehouse","Richland Center, Wisconsin",43.33353,-90.3844,"1974-12"],
+  ["82000627","Adams County Courthouse","Friendship, Wisconsin",43.97084,-89.81531,"1982-03"],
+  ["76000059","Aetna Station No. 5","Fond du Lac, Wisconsin",43.78414,-88.44635,"1976-12"],
+  ["85000570","Agricultural Heating station","Madison, Wisconsin",43.07625,-89.4117,"1985-03"],
+  ["78003383","Alexander, John, Wheat Warehouse","Milton, Wisconsin",42.77462,-88.93645,"1978-09"],
+  ["16000092","Allouez Water Department and Town Hall","Allouez, Wisconsin",44.48151,-88.02318,"2016-03"],
+  ["81000048","Amberg Town Hall","Amberg, Wisconsin",45.50235,-87.99467,"1981-03"],
+  ["03000580","American Tobacco Company Warehouses Complex","Madison, Wisconsin",43.06577,-89.39176,"2003-06"],
+  ["02000778","Amity Leather Products Company Factory","West Bend, Wisconsin",43.4148,-88.18042,"2002-07"],
+  ["92000029","Antigo Depot","Antigo, Wisconsin",45.13971,-89.15691,"1992-02"],
+  ["84003699","Antigo Opera House","Antigo, Wisconsin",45.14085,-89.15861,"1984-01"],
+  ["00001255","Antigo Post Office","Antigo, Wisconsin",45.13877,-89.15446,"2000-10"],
+  ["78000115","Antigo Public Library and Deleglise Cabin","Antigo, Wisconsin",45.13817,-89.15279,"1978-12"],
+  ["16000228","Appleton Woolen Mills","Appleton, Wisconsin",44.2567,-88.40248,"2016-05"],
+  ["94000388","Arcadia Free Public Library","Arcadia, Wisconsin",44.25208,-91.49583,"1994-04"],
+  ["82000628","Ashland County Courthouse","Ashland, Wisconsin",46.59104,-90.88544,"1982-03"],
+  ["66000800","Astor Fur Warehouse","Prairie du Chien, Wisconsin",43.05498,-91.16022,"1966-10"],
+  ["00000408","Baileys Harbor Town Hall--McArdle Library","Baileys Harbor, Wisconsin",45.06601,-87.12445,"2000-04"],
+  ["73001933","Atlas Theatre","Cheyenne, Wyoming",41.13248,-104.81552,"1973-04"],
+  ["15000858","Bairoil Town Hall","Bairoil Dr., Wyoming",42.24274,-107.55976,"2015-11"],
+  ["76001949","Carnegie Public Library","Buffalo, Wyoming",44.34803,-106.70003,"1976-11"],
+  ["93001187","Casper Fire Department Station No. 1","Casper, Wyoming",42.84766,-106.32694,"1993-11"],
+  ["82001828","Centennial Depot","Centennial, Wyoming",41.29681,-106.13761,"1982-11"],
+  ["03001024","Cheyenne Flour Milling Company","Cheyenne, Wyoming",41.13637,-104.82681,"2003-10"],
+  ["01001525","Church of St. Hubert the Hunter and Library","Bondurant, Wyoming",43.20146,-110.40672,"2002-01"],
+  ["80004053","City Hall","Rock Springs, Wyoming",41.58535,-109.22064,"1980-05"],
+  ["94000167","Douglas City Hall","Douglas, Wyoming",42.75816,-105.38451,"1994-03"],
+  ["00000853","Entrance Station--Devils Tower National Monument","Devils Tower, Wyoming",44.58968,-104.70044,"2000-07"],
+  ["13000919","Fossil Oregon Short Line Depot","Kemmerer, Wyoming",41.8167,-110.72652,"2013-12"],
+  ["94000741","Fremont, Elkhorn & Missouri Valley Railroad Passenger Depot","Douglas, Wyoming",42.75937,-105.40016,"1994-08"],
+  ["08001002","Gillette Post Office","Gillette, Wyoming",44.46073,-104.90751,"2008-10"],
+  ["03001253","Huff Memorial Library","Jackson, Wyoming",43.47812,-110.76095,"2003-12"],
+  ["08001304","Hyart Theater, The","Lovell, Wyoming",44.83797,-108.38806,"2009-01"],
+  ["86001101","Jack Creek Guard Station","Saratoga, Wyoming",41.273,-107.10942,"1986-05"],
+  ["90000620","Jackson Lake Ranger Station","Moose, Wyoming",43.87149,-110.57139,"1990-04"],
+  ["76001951","Johnson County Courthouse","Buffalo, Wyoming",44.34782,-106.69946,"1976-11"]
+];
+const registerUrl = 'https://www.nps.gov/orgs/1094/nrhp_spatialdata.htm';
+const registerSites = registerRows.map(([reference, name, place, lat, lng, listed]) => ({
+  id: `nrhp-${reference}`,
+  name, place, lat, lng,
+  cat: 'register',
+  year: listed ? `Listed ${listed}` : 'National Register',
+  styles: ['Historic building'],
+  inventions: [],
+  summary: 'A building indexed in the public National Register of Historic Places. The mapped location is approximate.',
+  timeline: listed ? [`National Register listing month in the dataset: ${listed}`] : [],
+  people: [],
+  questions: ['What was the original use of this building?', 'Which historic records document changes to the building?'],
+  sources: [
+    ['National Register record', `https://npgallery.nps.gov/AssetDetail/NRIS/${reference}`],
+    ['National Park Service spatial dataset', registerUrl]
+  ]
+}));
+const sites = [...data, ...registerSites];
+const sitesById = new Map(sites.map(site => [site.id, site]));
+const pageSize = 48;
+let resultPage = 0;
+let displayedSites = [];
+
 const $ = id => document.getElementById(id);
 const notebookKey = 'hiddenAtlasSaved02';
 const saved = loadNotebook();
@@ -310,8 +1254,7 @@ function loadNotebook() {
   try {
     const entries = JSON.parse(stored);
     if (!Array.isArray(entries)) throw new TypeError('Expected a list of saved sites');
-    const siteIds = new Set(data.map(site => site.id));
-    return new Set(entries.filter(id => siteIds.has(id)));
+    return new Set(entries.filter(id => sitesById.has(id)));
   } catch {
     showNotebookStatus('Saved notebook data could not be read. Your next bookmark starts a new notebook.');
     return new Set();
@@ -367,20 +1310,31 @@ if (hasLeaflet) {
     hikingButton.setAttribute('aria-pressed', String(enabled));
     trailNote.textContent = enabled ? 'Zoom in to see more marked hiking routes.' : '';
   });
-  data.forEach(d => {
-    const icon = L.divIcon({
-      className: '',
-      html: `<span class="pin" data-category="${d.cat}"></span>`,
-      iconSize: [20, 20]
-    });
-    const marker = L.marker([d.lat, d.lng], {icon, title: d.name}).addTo(map);
-    marker.on('click', () => select(d.id));
-    marker.bindTooltip(d.name);
-    markers.set(d.id, marker);
-  });
+
 } else {
   offlineMap();
   trailNote.textContent = 'Hiking trails are unavailable on the offline map.';
+}
+
+function addSiteMarker(site) {
+  const icon = L.divIcon({
+    className: '',
+    html: `<span class="pin" data-category="${site.cat}"></span>`,
+    iconSize: [20, 20]
+  });
+  const marker = L.marker([site.lat, site.lng], {icon, title: site.name}).addTo(map);
+  const label = document.createElement('span');
+  label.textContent = site.name;
+  marker.bindTooltip(label);
+  marker.on('click', () => select(site.id));
+  markers.set(site.id, marker);
+  return marker;
+}
+
+function frameResults() {
+  if (!hasLeaflet || !displayedSites.length) return;
+  const points = displayedSites.map(site => [site.lat, site.lng]);
+  map.fitBounds(points, {padding: [28, 28], maxZoom: 7});
 }
 
 function changeLayer(type) {
@@ -400,20 +1354,20 @@ layerButtons.forEach(button => button.addEventListener('click', () => changeLaye
 subjectButtons.forEach(button => {
   const subject = button.dataset.category;
   const count = button.querySelector('.focus-count');
-  if (count) count.textContent = data.filter(site => site.cat === subject).length;
+  if (count) count.textContent = sites.filter(site => site.cat === subject).length;
   button.addEventListener('click', () => {
     category = category === subject ? null : subject;
     notebook = false;
     current = null;
     if (subject === 'all') $('search').value = '';
+    resultPage = 0;
     $('list').scrollTop = 0;
     render();
     if (hasLeaflet) {
       if (!category || category === 'all') {
         map.setView([39, -97], 4);
       } else {
-        const points = data.filter(site => site.cat === category).map(site => [site.lat, site.lng]);
-        map.fitBounds(points, {padding: [28, 28], maxZoom: 7});
+        frameResults();
       }
     }
   });
@@ -424,17 +1378,23 @@ $('search-toggle').addEventListener('click', () => {
   $('search-toggle').setAttribute('aria-expanded', String(opening));
   if (opening) $('search').focus();
   else $('search').value = '';
+  resultPage = 0;
   render();
 });
 changeLayer('street');
 
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function archive(d){const q = d.terms?.trim() || `${d.name} ${d.place}`;return `<div class="notice">Archival discovery links are searches, not individually verified records. Confirm dates, captions and reuse rights at the source.</div><div class="links"><a target="_blank" rel="noopener" href="https://www.loc.gov/search/?${new URLSearchParams({q})}">Library of Congress ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' historic newspaper headline'})}">Period headlines ↗</a><a target="_blank" rel="noopener" href="https://commons.wikimedia.org/w/index.php?${new URLSearchParams({search:q,title:'Special:MediaSearch',type:'image'})}">Historic photographs ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' original site plan architectural blueprint'})}">Plans & blueprints ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' virtual tour 360 interior'})}">Virtual tours ↗</a></div><h3>Archive checklist</h3><ul><li>Original photographs of buildings, people and machinery</li><li>Contemporary newspapers and exhibition catalogs</li><li>Site plans, elevations and construction specifications</li><li>Documented restoration, demolition and reuse</li></ul>`}
+function sourceLinks(sources) {
+  if (!sources?.length) return '';
+  return `<h3>Sources</h3><div class="links">${sources.map(([label, url]) =>
+    `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(label)} ↗</a>`).join('')}</div>`;
+}
+function archive(d){const q = d.terms?.trim() || `${d.name} ${d.place}`;return sourceLinks(d.sources) + `<div class="notice">Archival discovery links are searches, not individually verified records. Confirm dates, captions and reuse rights at the source.</div><div class="links"><a target="_blank" rel="noopener" href="https://www.loc.gov/search/?${new URLSearchParams({q})}">Library of Congress ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' historic newspaper headline'})}">Period headlines ↗</a><a target="_blank" rel="noopener" href="https://commons.wikimedia.org/w/index.php?${new URLSearchParams({search:q,title:'Special:MediaSearch',type:'image'})}">Historic photographs ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' original site plan architectural blueprint'})}">Plans & blueprints ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' virtual tour 360 interior'})}">Virtual tours ↗</a></div><h3>Archive checklist</h3><ul><li>Original photographs of buildings, people and machinery</li><li>Contemporary newspapers and exhibition catalogs</li><li>Site plans, elevations and construction specifications</li><li>Documented restoration, demolition and reuse</li></ul>`}
 function connections(d){let matches=data.filter(x=>x.id!==d.id).map(x=>({d:x,shared:x.styles.filter(s=>d.styles.includes(s))})).filter(x=>x.shared.length).sort((a,b)=>b.shared.length-a.shared.length).slice(0,6);return `<p class="meta">Shared descriptors indicate similarity, not proof of a historical relationship.</p><div class="connections">${matches.map(x=>`<button class="connection" data-jump="${x.d.id}"><strong>${esc(x.d.name)}</strong><br><small>${esc(x.shared.join(' · '))}</small></button>`).join('')||'No indexed matches yet.'}</div>`}
 function engineering(d){return `<div class="notice">Experimental scenario calculator, not an AI determination or a historical cost estimate. Default inputs are hypothetical and do not represent measured dimensions, verified staffing or actual construction methods.</div><h3>Construction feasibility sandbox</h3><div class="calc"><label>Built floor area (sq ft)<input id="area" type="number" min="1" value="${d.size}"></label><label>Labor hours per sq ft<input id="hours" type="number" min="0.1" step="0.1" value="12"></label><label>Workers on site<input id="workers" type="number" min="1" value="800"></label><label>Hours / worker / day<input id="shift" type="number" min="1" max="24" value="9"></label><label>Working days / year<input id="days" type="number" min="1" max="366" value="260"></label><label>Material volume per sq ft (cu ft)<input id="material" type="number" min="0" step="0.1" value="3"></label></div><div class="result" id="estimate"></div><p class="meta">This simple model ignores parallel construction, weather, scaffolding, transport, equipment, skilled-trade mix and structural design. For temporary exposition buildings, facade area and structural system matter more than floor area alone.</p>`}
 function estimate(){let n=id=>Number($(id)?.value||0),h=n('area')*n('hours'),w=n('workers'),shift=n('shift'),days=n('days'),years=h/(w*shift*days),vol=n('area')*n('material');$('estimate').innerHTML=`<strong>Scenario results</strong><p>${Math.round(h).toLocaleString()} total labor hours<br>${(h/(w*shift)).toFixed(0)} working days · ${years.toFixed(2)} years<br>${Math.round(vol).toLocaleString()} hypothetical cubic feet of material</p><small>Illustrative arithmetic only; no sourcing or engineering validation.</small>`}
 function select(id) {
-  current = data.find(site => site.id === id);
+  current = sitesById.get(id);
   tab = 'overview';
   notebook = false;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -451,15 +1411,31 @@ function select(id) {
 }
 function render() {
   const query = $('search').value.trim().toLowerCase();
-  const found = data.filter(site =>
-    (!category || category === 'all' || site.cat === category) &&
-    (!notebook || saved.has(site.id)) &&
-    [site.name, site.place, site.year, site.summary, ...site.styles, ...site.inventions]
-      .join(' ').toLowerCase().includes(query)
-  );
+  const words = query.split(/\s+/).filter(Boolean);
+  const pool = query || notebook || category ? sites : data;
+  const found = pool.filter(site => {
+    if (category && category !== 'all' && site.cat !== category) return false;
+    if (notebook && !saved.has(site.id)) return false;
+    const text = [site.name, site.place, site.year, site.summary, ...site.styles, ...site.inventions, ...(site.aliases || [])]
+      .join(' ').toLowerCase();
+    return words.every(word => text.includes(word));
+  });
+  if (query) {
+    const rank = site => site.name.toLowerCase().includes(query) ? 0 : site.cat === 'register' ? 2 : 1;
+    found.sort((a, b) => rank(a) - rank(b));
+  }
+  const pageCount = Math.max(1, Math.ceil(found.length / pageSize));
+  resultPage = Math.min(resultPage, pageCount - 1);
+  const start = resultPage * pageSize;
+  displayedSites = found.slice(start, start + pageSize);
 
   $('collection-results').hidden = !category && searchPanel.hidden && !notebook;
-  $('total').textContent = `${found.length} ${notebook ? 'saved ' : ''}${found.length === 1 ? 'site' : 'sites'}`;
+  $('total').textContent = pageCount > 1
+    ? `${start + 1}–${start + displayedSites.length} of ${found.length} sites`
+    : `${found.length} ${notebook ? 'saved ' : ''}${found.length === 1 ? 'site' : 'sites'}`;
+  $('result-pages').hidden = pageCount === 1;
+  $('previous-results').disabled = resultPage === 0;
+  $('next-results').disabled = resultPage === pageCount - 1;
   $('dossier').hidden = !current;
   if (current) {
     const latitude = `${Math.abs(current.lat).toFixed(2)}° ${current.lat >= 0 ? 'N' : 'S'}`;
@@ -476,23 +1452,44 @@ function render() {
     button.setAttribute('aria-pressed', String(button.dataset.category === category));
   });
 
-  $('list').innerHTML = found.map(site => `
+  $('list').innerHTML = displayedSites.map(site => `
     <button class="entry ${current?.id === site.id ? 'active' : ''}" data-id="${site.id}" data-category="${site.cat}">
       <strong>${esc(site.name)}</strong><small>${esc(site.place)} · ${esc(site.year)}</small>
     </button>`
   ).join('') || '<p class="meta">No matching locations.</p>';
 
   if (hasLeaflet) {
-    const visibleSites = new Set(found.map(site => site.id));
+    const visibleSites = new Map(displayedSites.map(site => [site.id, site]));
+    if (current) visibleSites.set(current.id, current);
     markers.forEach((marker, id) => {
-      const visible = visibleSites.has(id);
-      if (visible && !map.hasLayer(marker)) marker.addTo(map);
-      if (!visible && map.hasLayer(marker)) map.removeLayer(marker);
+      if (!visibleSites.has(id)) {
+        map.removeLayer(marker);
+        markers.delete(id);
+      }
+    });
+    visibleSites.forEach((site, id) => {
+      const marker = markers.get(id) || addSiteMarker(site);
       marker.getElement()?.querySelector('.pin')?.classList.toggle('is-selected', id === current?.id);
     });
   } else {
-    renderOfflinePins(found);
+    renderOfflinePins(displayedSites.filter(site => site.lat >= 24 && site.lat <= 50 && site.lng >= -125 && site.lng <= -66));
   }
-  if(!current)return;let d=current;let tabs=['overview','archive','investigate','connections','engineering'];let body=tab==='overview'?`<p>${esc(d.summary)}</p><h3>Historical timeline</h3><ul>${d.timeline.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><h3>People</h3><ul>${(d.people.length?d.people:['People and contributors to be researched']).map(x=>`<li>${esc(x)}</li>`).join('')}</ul><h3>Exhibits & inventions</h3><ul>${d.inventions.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:tab==='archive'?archive(d):tab==='investigate'?`<h3>Research questions</h3>${d.questions.map(x=>`<div class="evidence">${esc(x)}</div>`).join('')}<h3>Evidence standard</h3><p>Record documented claims separately from unverified interpretations. Each claim should carry a source, date, confidence level and revision history.</p><div class="notice">No site-specific historical mystery or construction anomaly is asserted by these starter questions.</div>`:tab==='connections'?connections(d):engineering(d);$('dossier').innerHTML=`<div class="eyebrow">${esc(d.cat)} / ${esc(d.year)}</div><h2>${esc(d.name)}</h2><div class="meta">${esc(d.place)} · ${esc(d.styles.join(' · '))}</div><div style="margin-top:12px"><button class="btn" id="bookmark">${saved.has(d.id)?'★ Saved':'☆ Save to notebook'}</button></div><div class="tabs">${tabs.map(t=>`<button class="tab ${tab===t?'active':''}" data-tab="${t}">${({overview:'Story',archive:'Photos & plans',investigate:'Investigate',connections:'Connections',engineering:'Build estimate'})[t]}</button>`).join('')}</div><div class="detail">${body}</div>`;if(tab==='engineering'){['area','hours','workers','shift','days','material'].forEach(id=>$(id).addEventListener('input',estimate));estimate()}}
-$('list').addEventListener('click',e=>{let b=e.target.closest('[data-id]');if(b)select(b.dataset.id)});$('dossier').addEventListener('click',e=>{let t=e.target.closest('[data-tab]'),j=e.target.closest('[data-jump]');if(t){tab=t.dataset.tab;render()}if(j)select(j.dataset.jump);if(e.target.closest('#bookmark')){saved.has(current.id)?saved.delete(current.id):saved.add(current.id);persistNotebook();render()}});$('search').addEventListener('input',render);$('random').addEventListener('click',()=>select(data[Math.floor(Math.random()*data.length)].id));$('saved').addEventListener('click',()=>{notebook=!notebook;render()});render();
+  if(!current)return;let d=current;let tabs=['overview','archive','investigate','connections'];if(d.cat!=='register' && (d.size != null || !d.sources?.length))tabs.push('engineering');let body=tab==='overview'?`<p>${esc(d.summary)}</p>${sourceLinks(d.sources)}<h3>Historical timeline</h3><ul>${d.timeline.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><h3>People</h3><ul>${(d.people.length?d.people:['People and contributors to be researched']).map(x=>`<li>${esc(x)}</li>`).join('')}</ul><h3>Exhibits & inventions</h3><ul>${d.inventions.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:tab==='archive'?archive(d):tab==='investigate'?`<h3>Research questions</h3>${d.questions.map(x=>`<div class="evidence">${esc(x)}</div>`).join('')}<h3>Evidence standard</h3><p>Record documented claims separately from unverified interpretations. Each claim should carry a source, date, confidence level and revision history.</p><div class="notice">No site-specific historical mystery or construction anomaly is asserted by these starter questions.</div>`:tab==='connections'?connections(d):engineering(d);$('dossier').innerHTML=`<div class="eyebrow">${esc(d.cat)} / ${esc(d.year)}</div><h2>${esc(d.name)}</h2><div class="meta">${esc(d.place)} · ${esc(d.styles.join(' · '))}</div><div style="margin-top:12px"><button class="btn" id="bookmark">${saved.has(d.id)?'★ Saved':'☆ Save to notebook'}</button></div><div class="tabs">${tabs.map(t=>`<button class="tab ${tab===t?'active':''}" data-tab="${t}">${({overview:'Story',archive:'Photos & plans',investigate:'Investigate',connections:'Connections',engineering:'Build estimate'})[t]}</button>`).join('')}</div><div class="detail">${body}</div>`;if(tab==='engineering'){['area','hours','workers','shift','days','material'].forEach(id=>$(id).addEventListener('input',estimate));estimate()}}
+$('list').addEventListener('click',e=>{let b=e.target.closest('[data-id]');if(b)select(b.dataset.id)});$('dossier').addEventListener('click',e=>{let t=e.target.closest('[data-tab]'),j=e.target.closest('[data-jump]');if(t){tab=t.dataset.tab;render()}if(j)select(j.dataset.jump);if(e.target.closest('#bookmark')){saved.has(current.id)?saved.delete(current.id):saved.add(current.id);persistNotebook();render()}});$('search').addEventListener('input', () => {
+  resultPage = 0;
+  current = null;
+  $('list').scrollTop = 0;
+  render();
+  if ($('search').value.trim() && displayedSites.length <= 20) frameResults();
+});
+for (const [id, step] of [['previous-results', -1], ['next-results', 1]]) {
+  $(id).addEventListener('click', () => {
+    resultPage += step;
+    current = null;
+    $('list').scrollTop = 0;
+    render();
+    frameResults();
+  });
+}
+$('random').addEventListener('click',()=>select(data[Math.floor(Math.random()*data.length)].id));$('saved').addEventListener('click',()=>{notebook=!notebook;resultPage=0;render()});render();
 </script></body></html>
