@@ -1,7 +1,252 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>The Hidden Atlas · Field Edition 0.4</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>
-:root{--bg:#101a20;--panel:#182830;--panel2:#21343d;--gold:#d3ae70;--paper:#eadcc3;--muted:#a7b6b8}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--paper);font-family:system-ui,-apple-system,Segoe UI,sans-serif}button,input,select{font:inherit}button{cursor:pointer}header{padding:18px 22px;border-bottom:1px solid #44535a;background:#101a20;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.brand{font-family:Georgia,serif;letter-spacing:.14em;font-size:21px;color:var(--gold)}.tag{font-size:10px;letter-spacing:.2em;color:var(--muted);margin-top:5px}.top{display:flex;gap:8px;flex-wrap:wrap}.btn{background:var(--panel2);border:1px solid #50616a;color:var(--paper);padding:10px 13px;border-radius:8px}.btn:hover,.btn:focus{border-color:var(--gold)}.primary{background:var(--gold);color:#17242a;border-color:var(--gold);font-weight:700}main{display:grid;grid-template-columns:minmax(310px,37%) 1fr;min-height:calc(100vh - 80px)}aside{padding:18px;max-height:calc(100vh - 80px);overflow:auto;border-right:1px solid #42535b}.map-shell{position:relative;min-width:0}#map{min-height:600px;height:100%;background:#20303b}.map-toolbar{position:absolute;z-index:900;top:14px;left:14px;display:flex;gap:5px;flex-wrap:wrap}.layer{background:#17252de8;border:1px solid #b99a63;color:#eadcc3;border-radius:7px;padding:9px 11px;text-decoration:none;font-size:12px}.layer.active{background:#d3ae70;color:#14232b}.map-note{position:absolute;z-index:800;bottom:12px;left:12px;right:12px;pointer-events:none;background:#13242bd9;color:#f0ddba;padding:8px;border-radius:6px;font-size:11px;max-width:470px}.offline-map{width:100%;height:100%;min-height:600px;display:block}.offline-pin{cursor:pointer}.offline-pin circle{fill:#d3ae70;stroke:#17252d;stroke-width:2}.offline-pin text{fill:#fff3d8;font:11px system-ui}.offline-map .land{fill:#cbb990;stroke:#6c664e;stroke-width:2}.offline-map .gridline{stroke:#786f56;opacity:.24;stroke-width:1}.offline-map .water{fill:#314c57}.offline-map .atlas-label{fill:#e6d2a8;font:italic 22px Georgia}.intro{color:var(--muted);font-size:13px;line-height:1.6}.filters{display:flex;gap:8px;margin:14px 0}input,select{min-width:0;width:100%;padding:11px;border:1px solid #52616a;border-radius:8px;background:#122027;color:var(--paper)}.list{display:grid;gap:8px}.entry{background:var(--panel);padding:12px;border:1px solid #344b54;border-radius:9px;text-align:left;color:var(--paper)}.entry.active{border-color:var(--gold)}.entry strong{display:block;font-size:14px}.entry small{color:var(--muted)}.dossier{margin-top:16px;background:var(--panel);border:1px solid #455761;border-radius:12px;padding:16px}.eyebrow{color:var(--gold);font-size:11px;letter-spacing:.13em;text-transform:uppercase}h1,h2,h3{font-family:Georgia,serif;font-weight:500}h2{margin:9px 0 5px;font-size:26px}h3{font-size:18px;color:var(--gold);margin:18px 0 8px}p{line-height:1.55}.meta{color:var(--muted);font-size:12px}.tabs{display:flex;gap:5px;overflow:auto;margin:15px 0}.tab{background:#233842;border:0;border-radius:6px;padding:9px;color:var(--paper);white-space:nowrap}.tab.active{background:var(--gold);color:#14232b}.detail{font-size:13px}.detail ul{padding-left:20px;line-height:1.7}.evidence{border-left:3px solid var(--gold);padding:9px 12px;background:#23353d;margin:8px 0}.notice{color:#c4d0cf;font-size:12px;background:#253a43;padding:11px;border-radius:8px}.links{display:flex;gap:7px;flex-wrap:wrap}.links a{font-size:12px;color:var(--gold);border:1px solid #60727a;border-radius:7px;padding:8px;text-decoration:none}.connections{display:grid;gap:7px}.connection{padding:10px;border-radius:8px;border:1px solid #55616a;background:#1d3038;color:var(--paper);text-align:left}.calc{display:grid;grid-template-columns:1fr 1fr;gap:8px}.calc label{font-size:12px;color:var(--muted)}.calc input{margin-top:5px}.result{padding:12px;background:#273c42;border-radius:8px;margin-top:10px}footer{padding:14px;color:var(--muted);font-size:11px;border-top:1px solid #45555b}.leaflet-popup-content-wrapper{background:#172730;color:#f0e2c7}.leaflet-popup-tip{background:#172730}.leaflet-container a.leaflet-popup-close-button{color:#e7d2a8}.pin{background:#cda768;border:2px solid #f4dfb7;border-radius:50%;box-shadow:0 0 0 5px #d2aa6533;width:16px;height:16px}.pin.fair{background:#7aa6a0;border-color:#b7e5dd}.pin.fort{background:#d7a47e}.pin.mound{background:#91ba83}@media(max-width:800px){main{display:flex;flex-direction:column-reverse}#map{height:45vh;min-height:320px}.offline-map{min-height:320px}aside{max-height:none;border-right:0}header{padding:14px}.brand{font-size:18px}}
-#map.antique-tiles .leaflet-tile-pane{filter:sepia(.72) saturate(.6) contrast(.94)}
-</style></head><body><header><div><div class="brand">THE HIDDEN ATLAS</div><div class="tag">ARCHITECTURAL OBSERVATORY · FIELD EDITION 0.4</div></div><div class="top"><button class="btn primary" id="random">✦ Surprise me</button><button class="btn" id="saved">☆ Notebook <span id="count">0</span></button></div></header><main><aside><div class="eyebrow">Explore the American collection</div><p class="intro">Investigate historic buildings, vanished expositions, inventive displays, and architectural connections. Archival links lead to further research; reconstructions are labeled.</p><div class="filters"><input id="search" placeholder="Search places, styles, inventions…" aria-label="Search structures"><select id="filter" aria-label="Filter by category"><option value="all">All categories</option><option value="exposition">Expositions & fairs</option><option value="fort">Star forts</option><option value="mound">Mounds & earthworks</option><option value="civic">Civic & rail</option><option value="estate">Estates</option></select></div><div class="meta" id="total"></div><div class="list" id="list"></div><div class="dossier" id="dossier"><p>Select a location on the map or press Surprise me.</p></div></aside><section class="map-shell"><div class="map-toolbar"><button data-layer="antique" class="layer active">Antique</button><button data-layer="street" class="layer">Street</button><button data-layer="satellite" class="layer">Satellite</button><button data-layer="terrain" class="layer">Terrain relief</button><a href="https://apps.nationalmap.gov/viewer/" target="_blank" rel="noopener" class="layer">USGS LiDAR ↗</a></div><div id="map" aria-label="Interactive map of historical American locations"></div><div class="map-note" id="mapNote">Antique view is a stylized modern map, not an original historic chart.</div></section></main><footer>Research prototype. Historical descriptions are orientation summaries, not verified archival dossiers. Archaeological pins indicate approximate public sites, not sensitive feature coordinates. Map pins do not necessarily mark exact former building footprints. Map tiles © OpenStreetMap contributors.</footer><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>
+:root {
+  color-scheme: dark;
+  --bg: #0a1019;
+  --panel: #111b28;
+  --panel2: #172536;
+  --line: #2b3d50;
+  --gold: #edbe80;
+  --paper: #edf3f9;
+  --muted: #a6b6c7;
+  --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  --accent: #69d9ff;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--paper); font-family: system-ui, sans-serif; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+header {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 14px; padding: 18px clamp(16px, 3vw, 42px); border-bottom: 1px solid var(--line);
+  background: #0f1824;
+}
+.identity { display: flex; align-items: center; gap: 14px; }
+.insignia {
+  display: grid; place-items: center; width: 42px; aspect-ratio: 1;
+  border: 1px solid #9a7650; color: var(--gold); font-size: 25px; line-height: 1;
+  background: #1c2530; border-radius: 50%;
+}
+.brand { margin: 0; font: 500 clamp(19px, 2.5vw, 29px)/1 Georgia, serif; letter-spacing: .1em; color: var(--paper); }
+.tag, .eyebrow, .map-controls h2, .map-status { font-family: var(--mono); text-transform: uppercase; }
+.tag { margin-top: 7px; font-size: 10px; letter-spacing: .11em; color: var(--gold); }
+.top { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn, .layer, .tab, .connection, .links a {
+  background: #131f2e; border: 1px solid var(--line); border-radius: 4px; color: var(--paper);
+  padding: 9px 12px; text-decoration: none;
+}
+.btn:hover, .tab:hover, .connection:hover, .links a:hover { border-color: var(--gold); }
+.btn.primary { color: var(--gold); border-color: #916940; background: #27231f; }
+.btn[aria-pressed="true"], .tab.active { color: var(--gold); border-color: #916940; }
+main {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(310px, 360px); gap: 16px;
+  max-width: 1680px; margin: 0 auto; padding: 20px clamp(12px, 3vw, 42px);
+}
+.map-shell, aside { min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: #101a27; }
+.map-shell { grid-column: 1; grid-row: 1; align-self: start; }
+.map-controls {
+  display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap;
+  padding: 12px 14px; border-bottom: 1px solid var(--line);
+}
+.map-controls h2 { margin: 0; font-size: 11px; letter-spacing: .11em; color: var(--muted); }
+.map-toolbar { display: flex; align-items: stretch; flex-wrap: wrap; gap: 6px; }
+[data-layer="antique"] { --layer-color: #f1b862; }
+[data-layer="street"] { --layer-color: #69d9ff; }
+[data-layer="satellite"] { --layer-color: #c9a7ff; }
+[data-layer="terrain"] { --layer-color: #ff9e91; }
+.map-shell[data-active-layer="antique"] { --accent: #f1b862; }
+.map-shell[data-active-layer="satellite"] { --accent: #c9a7ff; }
+.map-shell[data-active-layer="terrain"] { --accent: #ff9e91; }
+.layer { display: inline-flex; gap: 7px; align-items: center; font: 600 12px var(--mono); min-height: 40px; }
+.layer[data-layer]::before, .category-key button::before {
+  content: ""; display: inline-block; width: 7px; height: 7px; flex: 0 0 7px;
+  transform: rotate(45deg); background: var(--layer-color, var(--category-color, var(--accent)));
+}
+.layer:hover { border-color: var(--layer-color, var(--accent)); }
+.layer.active {
+  color: var(--layer-color); border-color: var(--layer-color);
+  background: color-mix(in srgb, var(--layer-color) 14%, #101928);
+  box-shadow: inset 0 -2px var(--layer-color), 0 0 14px color-mix(in srgb, var(--layer-color) 23%, transparent);
+}
+.map-frame { position: relative; }
+#map { height: clamp(380px, 63vh, 740px); background: #182738; }
+.map-grid {
+  position: absolute; inset: 0; z-index: 450; pointer-events: none; opacity: .28;
+  background-image: linear-gradient(to right, #a3c3df24 1px, transparent 1px),
+    linear-gradient(to bottom, #a3c3df24 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.map-shell[data-active-layer="street"] .leaflet-tile-pane { filter: grayscale(1) invert(1) brightness(.79) contrast(.84) sepia(.2) hue-rotate(165deg) saturate(1.6); }
+.map-shell[data-active-layer="antique"] .leaflet-tile-pane { filter: sepia(.82) saturate(.65) brightness(.88) contrast(1.08); }
+.map-shell[data-active-layer="satellite"] .leaflet-tile-pane { filter: brightness(.76) saturate(.85); }
+.map-shell[data-active-layer="terrain"] .leaflet-tile-pane { filter: grayscale(1) invert(1) brightness(.9) contrast(.72) sepia(.25); }
+.leaflet-container .leaflet-control-zoom { border: 1px solid #526577; border-radius: 4px; }
+.leaflet-container .leaflet-control-zoom a {
+  width: 38px; height: 38px; line-height: 38px; background: #142333; color: var(--paper); border-color: var(--line);
+}
+.leaflet-container .leaflet-control-zoom a:hover { background: #26394c; }
+.leaflet-container .leaflet-control-zoom a.leaflet-disabled { color: #94a1ac; }
+.leaflet-container .leaflet-control-attribution { background: #0e1a28ed; color: #dbe6ee; }
+.leaflet-container .leaflet-control-attribution a { color: #a2e1ff; }
+.leaflet-container .leaflet-control-scale-line { color: var(--paper); background: #0e1a28ed; border-color: #9aaebf; text-shadow: none; }
+.leaflet-tooltip { background: #142333; color: var(--paper); border-color: #526577; }
+.map-status {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px;
+  padding: 12px 14px; border-top: 1px solid var(--line); font-size: 11px; line-height: 1.5;
+}
+.map-note { color: var(--muted); }
+#site-coordinates { color: var(--accent); white-space: nowrap; }
+.category-key {
+  display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px; border-top: 1px solid var(--line);
+}
+.category-key button {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 9px; min-height: 36px;
+  border: 1px solid transparent; border-radius: 4px; color: var(--muted); background: none; font-size: 12px;
+}
+.category-key button:hover, .category-key button[aria-pressed="true"] {
+  color: var(--paper); border-color: var(--category-color, var(--accent)); background: #172536;
+}
+[data-category="exposition"] { --category-color: #69d9ff; }
+[data-category="fort"] { --category-color: #ff9e91; }
+[data-category="mound"] { --category-color: #c9a7ff; }
+[data-category="civic"] { --category-color: #83e8cb; }
+[data-category="estate"] { --category-color: #f1b862; }
+.pin {
+  display: block; position: relative; width: 12px; height: 12px; margin: 4px;
+  background: var(--category-color); border: 2px solid #101a26; transform: rotate(45deg);
+  box-shadow: 0 0 0 1px var(--category-color), 0 0 10px #0a1019;
+}
+.pin.is-selected::after {
+  content: ""; position: absolute; inset: -7px; border: 1px solid var(--category-color);
+  border-radius: 45%; box-shadow: 0 0 12px var(--category-color);
+}
+.offline-map { display: block; width: 100%; height: 100%; }
+.offline-map .land { fill: #303e51; stroke: #849ab1; stroke-width: 2; }
+.offline-map .gridline { stroke: #6d879e; opacity: .32; }
+.offline-map .water { fill: #142131; }
+.offline-map .atlas-label { fill: #c7d7e5; font: 22px Georgia, serif; }
+.offline-pin { cursor: pointer; }
+.offline-pin circle { fill: var(--category-color); stroke: #111b28; stroke-width: 2; }
+.offline-pin.is-selected circle { stroke: white; stroke-width: 3; }
+aside { grid-column: 2; grid-row: 1; padding: 16px; }
+.eyebrow { color: var(--gold); font-size: 11px; letter-spacing: .12em; }
+.intro, .meta { color: var(--muted); font-size: 12px; }
+.intro { margin: 8px 0 14px; line-height: 1.6; }
+.filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-bottom: 10px; }
+input, select {
+  min-width: 0; width: 100%; padding: 9px 10px; border: 1px solid #475b70; border-radius: 4px;
+  background: #0c1622; color: var(--paper); min-height: 41px;
+}
+#filter { border-left: 3px solid var(--category-color, #63768a); }
+.list { display: grid; gap: 5px; max-height: 220px; overflow: auto; padding: 4px; margin: 6px -4px 0; }
+.entry {
+  display: grid; gap: 3px; text-align: left; padding: 9px 11px; border-radius: 4px;
+  background: #162233; border: 1px solid var(--line); border-left: 3px solid var(--category-color); color: var(--paper);
+}
+.entry:hover, .entry.active { background: #213248; border-color: var(--category-color); }
+.entry strong { font-size: 13px; }
+.entry small { color: var(--muted); }
+.dossier { margin-top: 14px; background: #151f2e; border: 1px solid var(--line); border-radius: 6px; padding: 14px; }
+h2, h3 { font-family: Georgia, serif; font-weight: 500; }
+h2 { margin: 7px 0 5px; font-size: 24px; }
+h3 { font-size: 18px; color: var(--gold); margin: 16px 0 8px; }
+p, .detail ul { line-height: 1.6; }
+.tabs { display: flex; flex-wrap: wrap; gap: 5px; margin: 12px 0; }
+.tab { font-size: 12px; }
+.detail { font-size: 13px; }
+.detail ul { padding-left: 20px; }
+.evidence, .notice, .result { background: #1e2c3e; padding: 10px; margin: 8px 0; border-radius: 4px; }
+.evidence { border-left: 3px solid var(--gold); }
+.notice { color: #d0deea; font-size: 12px; }
+.links, .connections { display: flex; gap: 6px; flex-wrap: wrap; }
+.links a { color: var(--gold); font-size: 12px; }
+.connection { text-align: left; }
+.calc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.calc label { font-size: 12px; color: var(--muted); }
+.calc input { margin-top: 5px; }
+footer { padding: 14px clamp(16px, 3vw, 42px); color: var(--muted); font-size: 11px; border-top: 1px solid var(--line); line-height: 1.55; }
+@media (max-width: 900px), (max-height: 500px) and (orientation: landscape) {
+  main { grid-template-columns: minmax(0, 1fr); gap: 12px; padding-top: 12px; }
+  aside { grid-column: 1; grid-row: 2; }
+  #map { height: clamp(236px, 49svh, 470px); }
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 450px) {
+  header { padding: 14px; }
+  .map-controls { padding: 10px; gap: 8px; }
+  .map-toolbar .layer { padding: 7px; font-size: 11px; min-height: 40px; }
+  .map-status { padding: 9px 10px; }
+  .category-key { padding: 4px 6px; }
+  aside { padding: 12px; }
+  .filters { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="identity">
+    <span class="insignia" aria-hidden="true">✦</span>
+    <div>
+      <h1 class="brand">THE HIDDEN ATLAS</h1>
+      <div class="tag">Architectural observatory · Field edition 0.4</div>
+    </div>
+  </div>
+  <div class="top">
+    <button class="btn primary" id="random">✦ Surprise me</button>
+    <button class="btn" id="saved" aria-pressed="false"><span id="notebook-label">☆ Notebook</span> <span id="count">0</span></button>
+  </div>
+</header>
+<main>
+  <section class="map-shell" aria-labelledby="map-heading" data-active-layer="street">
+    <div class="map-controls">
+      <h2 id="map-heading">Map layers</h2>
+      <div class="map-toolbar" role="group" aria-label="Basemap">
+        <button data-layer="antique" class="layer" aria-pressed="false">Antique</button>
+        <button data-layer="street" class="layer active" aria-pressed="true">Street</button>
+        <button data-layer="satellite" class="layer" aria-pressed="false">Satellite</button>
+        <button data-layer="terrain" class="layer" aria-pressed="false">Terrain relief</button>
+        <a href="https://apps.nationalmap.gov/viewer/" target="_blank" rel="noopener" class="layer">USGS LiDAR ↗</a>
+      </div>
+    </div>
+    <div class="map-frame">
+      <div id="map" aria-label="Interactive map of historical American locations"></div>
+      <div class="map-grid" aria-hidden="true"></div>
+    </div>
+    <div class="map-status">
+      <span class="map-note" id="mapNote" aria-live="polite">OpenStreetMap street basemap.</span>
+      <output id="site-coordinates" aria-label="Approximate selected site coordinates"></output>
+    </div>
+    <div class="category-key" role="group" aria-label="Filter map by site category">
+      <button data-category="all" aria-pressed="true">All sites</button>
+      <button data-category="exposition" aria-pressed="false">Expositions</button>
+      <button data-category="fort" aria-pressed="false">Star forts</button>
+      <button data-category="mound" aria-pressed="false">Earthworks</button>
+      <button data-category="civic" aria-pressed="false">Civic &amp; rail</button>
+      <button data-category="estate" aria-pressed="false">Estates</button>
+    </div>
+  </section>
+  <aside>
+    <div class="eyebrow">American collection</div>
+    <p class="intro">Explore historic sites, vanished expositions, and architectural connections.</p>
+    <div class="filters">
+      <input id="search" placeholder="Search places, styles, inventions…" aria-label="Search structures">
+      <select id="filter" aria-label="Filter by category">
+        <option value="all">All categories</option>
+        <option value="exposition">Expositions &amp; fairs</option>
+        <option value="fort">Star forts</option>
+        <option value="mound">Mounds &amp; earthworks</option>
+        <option value="civic">Civic &amp; rail</option>
+        <option value="estate">Estates</option>
+      </select>
+    </div>
+    <div class="meta" id="total" aria-live="polite"></div>
+    <div class="list" id="list"></div>
+    <div class="dossier" id="dossier"><p>Select a location on the map or press Surprise me.</p></div>
+  </aside>
+</main>
+<footer>Research prototype. Historical descriptions are orientation summaries, not verified archival dossiers. Archaeological pins indicate approximate public sites, not sensitive feature coordinates. Map pins do not necessarily mark exact former building footprints. Map tiles © OpenStreetMap contributors.</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
 const data=[
 {id:'chicago',name:'World’s Columbian Exposition',place:'Chicago, Illinois',year:'1893',cat:'exposition',lat:41.7826,lng:-87.5831,styles:['Beaux-Arts','Exposition','Temporary construction'],summary:'The White City transformed Jackson Park with monumental halls, electric lighting and a vast network of displays.',timeline:['1890–1893: Planning and construction','1893: Exposition opened','After 1893: Many temporary structures dismantled or destroyed'],people:['Daniel Burnham — director of works','Frederick Law Olmsted — landscape design'],inventions:['Ferris Wheel','Electrical and industrial exhibits'],questions:['Which structures used staff over timber or steel?','Which surviving plans document foundations and demolition?'],terms:'Worlds Columbian Exposition 1893 Chicago White City',size:6300000},
 {id:'stlouis',name:'Louisiana Purchase Exposition',place:'St. Louis, Missouri',year:'1904',cat:'exposition',lat:38.6385,lng:-90.2845,styles:['Beaux-Arts','Exposition','Temporary construction'],summary:'A large exposition in and around Forest Park featuring monumental temporary halls, cascades, transportation and technology exhibits.',timeline:['1901–1904: Fair planning and construction','1904: Exposition held','1905 onward: Temporary structures removed; selected permanent features remained'],people:['Isaac S. Taylor — director of works'],inventions:['Wireless telegraphy exhibits','Transportation and industrial machinery'],questions:['How were the temporary facades supported?','Which official fair reports itemize construction costs?'],terms:'Louisiana Purchase Exposition 1904 St Louis fair',size:5000000},
@@ -30,18 +275,120 @@ const data=[
 {"id": "mound8", "name": "Ocmulgee Mounds", "place": "Macon, Georgia", "year": "Pre-contact", "cat": "mound", "lat": 32.839, "lng": -83.607, "styles": ["Indigenous earthworks", "Archaeological landscape", "Mound"], "summary": "An Indigenous archaeological landscape. Explore documented construction phases, historical surveys, terrain models and community perspectives; buried architecture must be established through evidence.", "timeline": ["Indigenous construction and use: chronology varies by site", "Archaeological study and preservation: consult site records"], "people": [], "inventions": [], "questions": ["What architectural evidence has been documented?", "What can non-invasive surveys establish?", "What do Indigenous communities and archaeologists say about this place?"]},
 {"id": "mound9", "name": "Crystal River Archaeological State Park", "place": "Crystal River, Florida", "year": "Pre-contact", "cat": "mound", "lat": 28.897, "lng": -82.628, "styles": ["Indigenous earthworks", "Archaeological landscape", "Mound"], "summary": "An Indigenous archaeological landscape. Explore documented construction phases, historical surveys, terrain models and community perspectives; buried architecture must be established through evidence.", "timeline": ["Indigenous construction and use: chronology varies by site", "Archaeological study and preservation: consult site records"], "people": [], "inventions": [], "questions": ["What architectural evidence has been documented?", "What can non-invasive surveys establish?", "What do Indigenous communities and archaeologists say about this place?"]}
 ];
-const $=id=>document.getElementById(id), saved=new Set(JSON.parse(localStorage.getItem('hiddenAtlasSaved02')||'[]'));let current=null,tab='overview',notebook=false;let markers={}, map, activeLayer='antique', tileLayer;const hasLeaflet=typeof window.L!=='undefined';
+const $=id=>document.getElementById(id), saved=new Set(JSON.parse(localStorage.getItem('hiddenAtlasSaved02')||'[]'));let current=null,tab='overview',notebook=false;const markers = new Map();
+let map, tileLayer;const hasLeaflet=typeof window.L!=='undefined';
 const tiles={antique:{url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',options:{attribution:'© OpenStreetMap contributors',maxZoom:19}},street:{url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',options:{attribution:'© OpenStreetMap contributors',maxZoom:19}},satellite:{url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',options:{attribution:'Imagery © Esri and contributors',maxZoom:18}},terrain:{url:'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',options:{attribution:'Hillshade © Esri and contributors; not raw LiDAR',maxZoom:16}}};
 function offlineMap(){const el=$('map');el.innerHTML=`<svg class="offline-map" viewBox="0 0 850 560" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Simplified map of the contiguous United States with selectable historical sites"><rect class="water" width="850" height="560"/><g>${Array.from({length:12},(_,i)=>`<path class="gridline" d="M ${i*80} 0 V 560 M 0 ${i*55} H 850"/>`).join('')}</g><path class="land" d="M 65 105 L 142 118 206 134 274 146 332 151 393 156 447 163 505 160 560 142 601 129 640 115 676 99 718 88 747 107 752 135 735 159 725 186 740 201 714 226 690 249 681 276 668 303 643 318 632 356 604 371 588 416 563 440 536 414 518 380 482 363 451 356 420 355 396 347 370 344 347 342 320 336 295 327 275 319 246 303 216 284 196 259 177 235 155 209 135 182 104 160 83 135 Z"/><text x="320" y="78" class="atlas-label">The American Collection</text><g id="offlinePins"></g></svg>`;renderOfflinePins()}
-function renderOfflinePins(){let g=document.getElementById('offlinePins');if(!g)return;g.innerHTML=data.map(d=>{let x=70+(d.lng+125)/59*660,y=105+(49-d.lat)/25*325;return `<g class="offline-pin" data-offline-id="${d.id}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><circle r="7"/><title>${esc(d.name)}</title></g>`}).join('');g.onclick=e=>{let t=e.target.closest('[data-offline-id]');if(t)select(t.dataset.offlineId)}}
-if(hasLeaflet){map=L.map('map',{zoomControl:true}).setView([39,-97],4);tileLayer=L.tileLayer(tiles.antique.url,tiles.antique.options).addTo(map);data.forEach(d=>{let icon=L.divIcon({className:'',html:`<div class="pin ${d.cat==='exposition'?'fair':d.cat==='fort'?'fort':''}"></div>`,iconSize:[18,18]});markers[d.id]=L.marker([d.lat,d.lng],{icon}).addTo(map).on('click',()=>select(d.id));markers[d.id].bindTooltip(d.name)});map.whenReady(()=>setTimeout(()=>map.invalidateSize(),100));}else{offlineMap();$('mapNote').textContent='Offline preview mode: interactive site pins work. For detailed map tiles, open the deployed website in Safari.'}
-function changeLayer(type){activeLayer=type;document.querySelectorAll('[data-layer]').forEach(b=>b.classList.toggle('active',b.dataset.layer===type));if(hasLeaflet){map.removeLayer(tileLayer);tileLayer=L.tileLayer(tiles[type].url,tiles[type].options).addTo(map);if(type==='antique')$('map').classList.add('antique-tiles');else $('map').classList.remove('antique-tiles');}else{if(type==='satellite'||type==='street'||type==='terrain')$('mapNote').textContent='Detailed map tiles require the hosted version; this file preview shows a selectable fallback map.'}if(type==='antique')$('mapNote').textContent='Stylized modern basemap; genuine georeferenced historical overlays are planned.';if(type==='satellite'&&hasLeaflet)$('mapNote').textContent='Satellite imagery © Esri and contributors. Imagery dates vary by location.';if(type==='street'&&hasLeaflet)$('mapNote').textContent='OpenStreetMap street basemap.';if(type==='terrain'&&hasLeaflet)$('mapNote').textContent='Terrain hillshade, not raw LiDAR. Layer switching preserves map center and zoom.'}
-document.querySelectorAll('[data-layer]').forEach(b=>b.addEventListener('click',()=>changeLayer(b.dataset.layer)));if(hasLeaflet)changeLayer('antique');
+function renderOfflinePins(found = data){let g=document.getElementById('offlinePins');if(!g)return;g.innerHTML=found.map(d=>{let x=70+(d.lng+125)/59*660,y=105+(49-d.lat)/25*325;return `<g class="offline-pin ${current?.id===d.id ? 'is-selected' : ''}" data-category="${d.cat}" data-offline-id="${d.id}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><circle r="7"/><title>${esc(d.name)}</title></g>`}).join('');g.onclick=e=>{let t=e.target.closest('[data-offline-id]');if(t)select(t.dataset.offlineId)}}
+const mapShell = document.querySelector('.map-shell');
+const layerButtons = document.querySelectorAll('.map-toolbar button[data-layer]');
+const categoryButtons = document.querySelectorAll('.category-key button');
+const layerNotes = {
+  antique: 'Stylized modern basemap. Historical overlays are planned.',
+  street: 'OpenStreetMap street basemap.',
+  satellite: 'Esri satellite imagery. Dates vary by location.',
+  terrain: 'Esri terrain hillshade.'
+};
+if (hasLeaflet) {
+  map = L.map('map', {zoomControl: false}).setView([39, -97], 4);
+  L.control.zoom({position: 'topright'}).addTo(map);
+  L.control.scale().addTo(map);
+  data.forEach(d => {
+    const icon = L.divIcon({
+      className: '',
+      html: `<span class="pin" data-category="${d.cat}"></span>`,
+      iconSize: [20, 20]
+    });
+    const marker = L.marker([d.lat, d.lng], {icon, title: d.name}).addTo(map);
+    marker.on('click', () => select(d.id));
+    marker.bindTooltip(d.name);
+    markers.set(d.id, marker);
+  });
+} else {
+  offlineMap();
+}
+
+function changeLayer(type) {
+  mapShell.dataset.activeLayer = type;
+  layerButtons.forEach(button => {
+    const selected = button.dataset.layer === type;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+  if (hasLeaflet) {
+    if (tileLayer) map.removeLayer(tileLayer);
+    tileLayer = L.tileLayer(tiles[type].url, tiles[type].options).addTo(map);
+  }
+  $('mapNote').textContent = hasLeaflet ? layerNotes[type] : 'Offline map · detailed imagery is unavailable.';
+}
+
+layerButtons.forEach(button => button.addEventListener('click', () => changeLayer(button.dataset.layer)));
+categoryButtons.forEach(button => button.addEventListener('click', () => {
+  $('filter').value = button.dataset.category;
+  render();
+}));
+changeLayer('street');
+
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function searchUrl(q,site){return site+'?'+new URLSearchParams({search:q})}function archive(d){let q=d.terms;return `<div class="notice">Archival discovery links are searches, not individually verified records. Confirm dates, captions and reuse rights at the source.</div><div class="links"><a target="_blank" rel="noopener" href="https://www.loc.gov/search/?${new URLSearchParams({q})}">Library of Congress ↗</a><a target="_blank" rel="noopener" href="https://www.loc.gov/resource/sn83045462/?${new URLSearchParams({fo:'json'})}" style="display:none">Hidden</a><a target="_blank" rel="noopener" href="https://www.loc.gov/newspapers/?${new URLSearchParams({fo:'json'})}" style="display:none">Hidden</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' historic newspaper headline'})}">Period headlines ↗</a><a target="_blank" rel="noopener" href="https://commons.wikimedia.org/w/index.php?${new URLSearchParams({search:q,title:'Special:MediaSearch',type:'image'})}">Historic photographs ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' original site plan architectural blueprint'})}">Plans & blueprints ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' virtual tour 360 interior'})}">Virtual tours ↗</a></div><h3>Archive checklist</h3><ul><li>Original photographs of buildings, people and machinery</li><li>Contemporary newspapers and exhibition catalogs</li><li>Site plans, elevations and construction specifications</li><li>Documented restoration, demolition and reuse</li></ul>`}
 function connections(d){let matches=data.filter(x=>x.id!==d.id).map(x=>({d:x,shared:x.styles.filter(s=>d.styles.includes(s))})).filter(x=>x.shared.length).sort((a,b)=>b.shared.length-a.shared.length).slice(0,6);return `<p class="meta">Shared descriptors indicate similarity, not proof of a historical relationship.</p><div class="connections">${matches.map(x=>`<button class="connection" data-jump="${x.d.id}"><strong>${esc(x.d.name)}</strong><br><small>${esc(x.shared.join(' · '))}</small></button>`).join('')||'No indexed matches yet.'}</div>`}
 function engineering(d){return `<div class="notice">Experimental scenario calculator, not an AI determination or a historical cost estimate. Default inputs are hypothetical and do not represent measured dimensions, verified staffing or actual construction methods.</div><h3>Construction feasibility sandbox</h3><div class="calc"><label>Built floor area (sq ft)<input id="area" type="number" min="1" value="${d.size}"></label><label>Labor hours per sq ft<input id="hours" type="number" min="0.1" step="0.1" value="12"></label><label>Workers on site<input id="workers" type="number" min="1" value="800"></label><label>Hours / worker / day<input id="shift" type="number" min="1" max="24" value="9"></label><label>Working days / year<input id="days" type="number" min="1" max="366" value="260"></label><label>Material volume per sq ft (cu ft)<input id="material" type="number" min="0" step="0.1" value="3"></label></div><div class="result" id="estimate"></div><p class="meta">This simple model ignores parallel construction, weather, scaffolding, transport, equipment, skilled-trade mix and structural design. For temporary exposition buildings, facade area and structural system matter more than floor area alone.</p>`}
 function estimate(){let n=id=>Number($(id)?.value||0),h=n('area')*n('hours'),w=n('workers'),shift=n('shift'),days=n('days'),years=h/(w*shift*days),vol=n('area')*n('material');$('estimate').innerHTML=`<strong>Scenario results</strong><p>${Math.round(h).toLocaleString()} total labor hours<br>${(h/(w*shift)).toFixed(0)} working days · ${years.toFixed(2)} years<br>${Math.round(vol).toLocaleString()} hypothetical cubic feet of material</p><small>Illustrative arithmetic only; no sourcing or engineering validation.</small>`}
-function select(id){current=data.find(d=>d.id===id);tab='overview';notebook=false;if(hasLeaflet)map.flyTo([current.lat,current.lng],Math.max(map.getZoom(),7),{duration:.7});render();if(window.innerWidth<800)$('dossier').scrollIntoView({behavior:'smooth',block:'start'})}
-function render(){let q=$('search').value.toLowerCase(),f=$('filter').value;let found=data.filter(d=>(f==='all'||d.cat===f)&&(!notebook||saved.has(d.id))&&[d.name,d.place,d.year,d.summary,...d.styles,...d.inventions].join(' ').toLowerCase().includes(q));$('total').textContent=`${found.length} locations · ${data.length} indexed`; $('count').textContent=saved.size;$('list').innerHTML=found.map(d=>`<button class="entry ${current?.id===d.id?'active':''}" data-id="${d.id}"><strong>${esc(d.name)}</strong><small>${esc(d.place)} · ${esc(d.year)}</small></button>`).join('')||'<p class="meta">No matching locations.</p>';Object.entries(markers).forEach(([id,m])=>{let visible=found.some(d=>d.id===id);if(hasLeaflet&&visible&&!map.hasLayer(m))m.addTo(map);if(hasLeaflet&&!visible&&map.hasLayer(m))map.removeLayer(m)});if(!current)return;let d=current;let tabs=['overview','archive','investigate','connections','engineering'];let body=tab==='overview'?`<p>${esc(d.summary)}</p><h3>Historical timeline</h3><ul>${d.timeline.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><h3>People</h3><ul>${(d.people.length?d.people:['People and contributors to be researched']).map(x=>`<li>${esc(x)}</li>`).join('')}</ul><h3>Exhibits & inventions</h3><ul>${d.inventions.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:tab==='archive'?archive(d):tab==='investigate'?`<h3>Research questions</h3>${d.questions.map(x=>`<div class="evidence">${esc(x)}</div>`).join('')}<h3>Evidence standard</h3><p>Record documented claims separately from unverified interpretations. Each claim should carry a source, date, confidence level and revision history.</p><div class="notice">No site-specific historical mystery or construction anomaly is asserted by these starter questions.</div>`:tab==='connections'?connections(d):engineering(d);$('dossier').innerHTML=`<div class="eyebrow">${esc(d.cat)} / ${esc(d.year)}</div><h2>${esc(d.name)}</h2><div class="meta">${esc(d.place)} · ${esc(d.styles.join(' · '))}</div><div style="margin-top:12px"><button class="btn" id="bookmark">${saved.has(d.id)?'★ Saved':'☆ Save to notebook'}</button></div><div class="tabs">${tabs.map(t=>`<button class="tab ${tab===t?'active':''}" data-tab="${t}">${({overview:'Story',archive:'Photos & plans',investigate:'Investigate',connections:'Connections',engineering:'Build estimate'})[t]}</button>`).join('')}</div><div class="detail">${body}</div>`;if(tab==='engineering'){['area','hours','workers','shift','days','material'].forEach(id=>$(id).addEventListener('input',estimate));estimate()}}
-$('list').addEventListener('click',e=>{let b=e.target.closest('[data-id]');if(b)select(b.dataset.id)});$('dossier').addEventListener('click',e=>{let t=e.target.closest('[data-tab]'),j=e.target.closest('[data-jump]');if(t){tab=t.dataset.tab;render()}if(j)select(j.dataset.jump);if(e.target.closest('#bookmark')){saved.has(current.id)?saved.delete(current.id):saved.add(current.id);localStorage.setItem('hiddenAtlasSaved02',JSON.stringify([...saved]));render()}});$('search').addEventListener('input',render);$('filter').addEventListener('change',render);$('random').addEventListener('click',()=>select(data[Math.floor(Math.random()*data.length)].id));$('saved').addEventListener('click',()=>{notebook=!notebook;render();$('saved').textContent=notebook?'Show all locations':'☆ Notebook '+saved.size});select('stlouis');if(hasLeaflet)map.setView([39,-97],4,{animate:false});
+function select(id, {initial = false} = {}) {
+  current = data.find(site => site.id === id);
+  tab = 'overview';
+  notebook = false;
+  const latitude = `${Math.abs(current.lat).toFixed(2)}° ${current.lat >= 0 ? 'N' : 'S'}`;
+  const longitude = `${Math.abs(current.lng).toFixed(2)}° ${current.lng >= 0 ? 'E' : 'W'}`;
+  $('site-coordinates').textContent = `${latitude} · ${longitude}`;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (hasLeaflet && !initial) {
+    map.flyTo([current.lat, current.lng], Math.max(map.getZoom(), 7), {
+      duration: .7,
+      animate: !reducedMotion
+    });
+  }
+  render();
+  if (!initial && $('dossier').getBoundingClientRect().top >= innerHeight) {
+    $('dossier').scrollIntoView({behavior: reducedMotion ? 'instant' : 'smooth', block: 'start'});
+  }
+}
+function render() {
+  const query = $('search').value.toLowerCase();
+  const category = $('filter').value;
+  const found = data.filter(site =>
+    (category === 'all' || site.cat === category) &&
+    (!notebook || saved.has(site.id)) &&
+    [site.name, site.place, site.year, site.summary, ...site.styles, ...site.inventions]
+      .join(' ').toLowerCase().includes(query)
+  );
+
+  $('total').textContent = `${found.length} locations · ${data.length} indexed`;
+  $('count').textContent = saved.size;
+  $('count').hidden = notebook;
+  $('saved').setAttribute('aria-pressed', String(notebook));
+  $('notebook-label').textContent = notebook ? 'Show all locations' : '☆ Notebook';
+  $('filter').dataset.category = category;
+  categoryButtons.forEach(button => {
+    button.setAttribute('aria-pressed', String(button.dataset.category === category));
+  });
+
+  $('list').innerHTML = found.map(site => `
+    <button class="entry ${current?.id === site.id ? 'active' : ''}" data-id="${site.id}" data-category="${site.cat}">
+      <strong>${esc(site.name)}</strong><small>${esc(site.place)} · ${esc(site.year)}</small>
+    </button>`
+  ).join('') || '<p class="meta">No matching locations.</p>';
+
+  if (hasLeaflet) {
+    const visibleSites = new Set(found.map(site => site.id));
+    markers.forEach((marker, id) => {
+      const visible = visibleSites.has(id);
+      if (visible && !map.hasLayer(marker)) marker.addTo(map);
+      if (!visible && map.hasLayer(marker)) map.removeLayer(marker);
+      marker.getElement()?.querySelector('.pin')?.classList.toggle('is-selected', id === current?.id);
+    });
+  } else {
+    renderOfflinePins(found);
+  }
+  if(!current)return;let d=current;let tabs=['overview','archive','investigate','connections','engineering'];let body=tab==='overview'?`<p>${esc(d.summary)}</p><h3>Historical timeline</h3><ul>${d.timeline.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><h3>People</h3><ul>${(d.people.length?d.people:['People and contributors to be researched']).map(x=>`<li>${esc(x)}</li>`).join('')}</ul><h3>Exhibits & inventions</h3><ul>${d.inventions.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:tab==='archive'?archive(d):tab==='investigate'?`<h3>Research questions</h3>${d.questions.map(x=>`<div class="evidence">${esc(x)}</div>`).join('')}<h3>Evidence standard</h3><p>Record documented claims separately from unverified interpretations. Each claim should carry a source, date, confidence level and revision history.</p><div class="notice">No site-specific historical mystery or construction anomaly is asserted by these starter questions.</div>`:tab==='connections'?connections(d):engineering(d);$('dossier').innerHTML=`<div class="eyebrow">${esc(d.cat)} / ${esc(d.year)}</div><h2>${esc(d.name)}</h2><div class="meta">${esc(d.place)} · ${esc(d.styles.join(' · '))}</div><div style="margin-top:12px"><button class="btn" id="bookmark">${saved.has(d.id)?'★ Saved':'☆ Save to notebook'}</button></div><div class="tabs">${tabs.map(t=>`<button class="tab ${tab===t?'active':''}" data-tab="${t}">${({overview:'Story',archive:'Photos & plans',investigate:'Investigate',connections:'Connections',engineering:'Build estimate'})[t]}</button>`).join('')}</div><div class="detail">${body}</div>`;if(tab==='engineering'){['area','hours','workers','shift','days','material'].forEach(id=>$(id).addEventListener('input',estimate));estimate()}}
+$('list').addEventListener('click',e=>{let b=e.target.closest('[data-id]');if(b)select(b.dataset.id)});$('dossier').addEventListener('click',e=>{let t=e.target.closest('[data-tab]'),j=e.target.closest('[data-jump]');if(t){tab=t.dataset.tab;render()}if(j)select(j.dataset.jump);if(e.target.closest('#bookmark')){saved.has(current.id)?saved.delete(current.id):saved.add(current.id);localStorage.setItem('hiddenAtlasSaved02',JSON.stringify([...saved]));render()}});$('search').addEventListener('input',render);$('filter').addEventListener('change',render);$('random').addEventListener('click',()=>select(data[Math.floor(Math.random()*data.length)].id));$('saved').addEventListener('click',()=>{notebook=!notebook;render()});select('stlouis', {initial: true});
 </script></body></html>
