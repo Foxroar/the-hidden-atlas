@@ -31,6 +31,7 @@ header {
 .tag, .eyebrow, .map-controls h2, .map-status { font-family: var(--mono); text-transform: uppercase; }
 .tag { margin-top: 7px; font-size: 10px; letter-spacing: .11em; color: var(--gold); }
 .top { display: flex; gap: 8px; flex-wrap: wrap; }
+#notebook-status { flex-basis: 100%; margin: 0; color: var(--gold); font-size: 12px; }
 .btn, .layer, .tab, .connection, .links a {
   background: #131f2e; border: 1px solid var(--line); border-radius: 4px; color: var(--paper);
   padding: 9px 12px; text-decoration: none;
@@ -204,6 +205,7 @@ footer { padding: 14px clamp(16px, 3vw, 42px); color: var(--muted); font-size: 1
     <button class="btn primary" id="random">✦ Surprise me</button>
     <button class="btn" id="saved" aria-pressed="false"><span id="notebook-label">☆ Notebook</span> <span id="count">0</span></button>
   </div>
+  <p id="notebook-status" role="status" hidden></p>
 </header>
 <main>
   <section class="map-shell" aria-labelledby="map-heading" data-active-layer="street">
@@ -283,7 +285,48 @@ const data=[
 {"id": "mound8", "name": "Ocmulgee Mounds", "place": "Macon, Georgia", "year": "Pre-contact", "cat": "mound", "lat": 32.839, "lng": -83.607, "styles": ["Indigenous earthworks", "Archaeological landscape", "Mound"], "summary": "An Indigenous archaeological landscape. Explore documented construction phases, historical surveys, terrain models and community perspectives; buried architecture must be established through evidence.", "timeline": ["Indigenous construction and use: chronology varies by site", "Archaeological study and preservation: consult site records"], "people": [], "inventions": [], "questions": ["What architectural evidence has been documented?", "What can non-invasive surveys establish?", "What do Indigenous communities and archaeologists say about this place?"]},
 {"id": "mound9", "name": "Crystal River Archaeological State Park", "place": "Crystal River, Florida", "year": "Pre-contact", "cat": "mound", "lat": 28.897, "lng": -82.628, "styles": ["Indigenous earthworks", "Archaeological landscape", "Mound"], "summary": "An Indigenous archaeological landscape. Explore documented construction phases, historical surveys, terrain models and community perspectives; buried architecture must be established through evidence.", "timeline": ["Indigenous construction and use: chronology varies by site", "Archaeological study and preservation: consult site records"], "people": [], "inventions": [], "questions": ["What architectural evidence has been documented?", "What can non-invasive surveys establish?", "What do Indigenous communities and archaeologists say about this place?"]}
 ];
-const $=id=>document.getElementById(id), saved=new Set(JSON.parse(localStorage.getItem('hiddenAtlasSaved02')||'[]'));let current=null,tab='overview',notebook=false;const markers = new Map();
+const $ = id => document.getElementById(id);
+const notebookKey = 'hiddenAtlasSaved02';
+const saved = loadNotebook();
+let current = null, tab = 'overview', notebook = false;
+const markers = new Map();
+
+function showNotebookStatus(message) {
+  const status = $('notebook-status');
+  status.textContent = message;
+  status.hidden = !message;
+}
+
+function loadNotebook() {
+  let stored;
+  try {
+    stored = localStorage.getItem(notebookKey);
+  } catch {
+    showNotebookStatus('Notebook storage is unavailable. Bookmarks may be lost when you reload.');
+    return new Set();
+  }
+
+  if (stored === null) return new Set();
+  try {
+    const entries = JSON.parse(stored);
+    if (!Array.isArray(entries)) throw new TypeError('Expected a list of saved sites');
+    const siteIds = new Set(data.map(site => site.id));
+    return new Set(entries.filter(id => siteIds.has(id)));
+  } catch {
+    showNotebookStatus('Saved notebook data could not be read. Your next bookmark starts a new notebook.');
+    return new Set();
+  }
+}
+
+function persistNotebook() {
+  try {
+    localStorage.setItem(notebookKey, JSON.stringify([...saved]));
+    showNotebookStatus('');
+  } catch {
+    showNotebookStatus('Notebook changes could not be stored. They may be lost when you reload.');
+  }
+}
+
 let map, tileLayer;const hasLeaflet=typeof window.L!=='undefined';
 const tiles={antique:{url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',options:{attribution:'© OpenStreetMap contributors',maxZoom:19}},street:{url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',options:{attribution:'© OpenStreetMap contributors',maxZoom:19}},satellite:{url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',options:{attribution:'Imagery © Esri and contributors',maxZoom:18}},terrain:{url:'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',options:{attribution:'Hillshade © Esri and contributors; not raw LiDAR',maxZoom:16}}};
 function offlineMap(){const el=$('map');el.innerHTML=`<svg class="offline-map" viewBox="0 0 850 560" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Simplified map of the contiguous United States with selectable historical sites"><rect class="water" width="850" height="560"/><g>${Array.from({length:12},(_,i)=>`<path class="gridline" d="M ${i*80} 0 V 560 M 0 ${i*55} H 850"/>`).join('')}</g><path class="land" d="M 65 105 L 142 118 206 134 274 146 332 151 393 156 447 163 505 160 560 142 601 129 640 115 676 99 718 88 747 107 752 135 735 159 725 186 740 201 714 226 690 249 681 276 668 303 643 318 632 356 604 371 588 416 563 440 536 414 518 380 482 363 451 356 420 355 396 347 370 344 347 342 320 336 295 327 275 319 246 303 216 284 196 259 177 235 155 209 135 182 104 160 83 135 Z"/><text x="320" y="78" class="atlas-label">The American Collection</text><g id="offlinePins"></g></svg>`;renderOfflinePins()}
@@ -385,7 +428,8 @@ $('search-toggle').addEventListener('click', () => {
 });
 changeLayer('street');
 
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function searchUrl(q,site){return site+'?'+new URLSearchParams({search:q})}function archive(d){let q=d.terms;return `<div class="notice">Archival discovery links are searches, not individually verified records. Confirm dates, captions and reuse rights at the source.</div><div class="links"><a target="_blank" rel="noopener" href="https://www.loc.gov/search/?${new URLSearchParams({q})}">Library of Congress ↗</a><a target="_blank" rel="noopener" href="https://www.loc.gov/resource/sn83045462/?${new URLSearchParams({fo:'json'})}" style="display:none">Hidden</a><a target="_blank" rel="noopener" href="https://www.loc.gov/newspapers/?${new URLSearchParams({fo:'json'})}" style="display:none">Hidden</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' historic newspaper headline'})}">Period headlines ↗</a><a target="_blank" rel="noopener" href="https://commons.wikimedia.org/w/index.php?${new URLSearchParams({search:q,title:'Special:MediaSearch',type:'image'})}">Historic photographs ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' original site plan architectural blueprint'})}">Plans & blueprints ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' virtual tour 360 interior'})}">Virtual tours ↗</a></div><h3>Archive checklist</h3><ul><li>Original photographs of buildings, people and machinery</li><li>Contemporary newspapers and exhibition catalogs</li><li>Site plans, elevations and construction specifications</li><li>Documented restoration, demolition and reuse</li></ul>`}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function archive(d){const q = d.terms?.trim() || `${d.name} ${d.place}`;return `<div class="notice">Archival discovery links are searches, not individually verified records. Confirm dates, captions and reuse rights at the source.</div><div class="links"><a target="_blank" rel="noopener" href="https://www.loc.gov/search/?${new URLSearchParams({q})}">Library of Congress ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' historic newspaper headline'})}">Period headlines ↗</a><a target="_blank" rel="noopener" href="https://commons.wikimedia.org/w/index.php?${new URLSearchParams({search:q,title:'Special:MediaSearch',type:'image'})}">Historic photographs ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' original site plan architectural blueprint'})}">Plans & blueprints ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' virtual tour 360 interior'})}">Virtual tours ↗</a></div><h3>Archive checklist</h3><ul><li>Original photographs of buildings, people and machinery</li><li>Contemporary newspapers and exhibition catalogs</li><li>Site plans, elevations and construction specifications</li><li>Documented restoration, demolition and reuse</li></ul>`}
 function connections(d){let matches=data.filter(x=>x.id!==d.id).map(x=>({d:x,shared:x.styles.filter(s=>d.styles.includes(s))})).filter(x=>x.shared.length).sort((a,b)=>b.shared.length-a.shared.length).slice(0,6);return `<p class="meta">Shared descriptors indicate similarity, not proof of a historical relationship.</p><div class="connections">${matches.map(x=>`<button class="connection" data-jump="${x.d.id}"><strong>${esc(x.d.name)}</strong><br><small>${esc(x.shared.join(' · '))}</small></button>`).join('')||'No indexed matches yet.'}</div>`}
 function engineering(d){return `<div class="notice">Experimental scenario calculator, not an AI determination or a historical cost estimate. Default inputs are hypothetical and do not represent measured dimensions, verified staffing or actual construction methods.</div><h3>Construction feasibility sandbox</h3><div class="calc"><label>Built floor area (sq ft)<input id="area" type="number" min="1" value="${d.size}"></label><label>Labor hours per sq ft<input id="hours" type="number" min="0.1" step="0.1" value="12"></label><label>Workers on site<input id="workers" type="number" min="1" value="800"></label><label>Hours / worker / day<input id="shift" type="number" min="1" max="24" value="9"></label><label>Working days / year<input id="days" type="number" min="1" max="366" value="260"></label><label>Material volume per sq ft (cu ft)<input id="material" type="number" min="0" step="0.1" value="3"></label></div><div class="result" id="estimate"></div><p class="meta">This simple model ignores parallel construction, weather, scaffolding, transport, equipment, skilled-trade mix and structural design. For temporary exposition buildings, facade area and structural system matter more than floor area alone.</p>`}
 function estimate(){let n=id=>Number($(id)?.value||0),h=n('area')*n('hours'),w=n('workers'),shift=n('shift'),days=n('days'),years=h/(w*shift*days),vol=n('area')*n('material');$('estimate').innerHTML=`<strong>Scenario results</strong><p>${Math.round(h).toLocaleString()} total labor hours<br>${(h/(w*shift)).toFixed(0)} working days · ${years.toFixed(2)} years<br>${Math.round(vol).toLocaleString()} hypothetical cubic feet of material</p><small>Illustrative arithmetic only; no sourcing or engineering validation.</small>`}
@@ -450,5 +494,5 @@ function render() {
     renderOfflinePins(found);
   }
   if(!current)return;let d=current;let tabs=['overview','archive','investigate','connections','engineering'];let body=tab==='overview'?`<p>${esc(d.summary)}</p><h3>Historical timeline</h3><ul>${d.timeline.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><h3>People</h3><ul>${(d.people.length?d.people:['People and contributors to be researched']).map(x=>`<li>${esc(x)}</li>`).join('')}</ul><h3>Exhibits & inventions</h3><ul>${d.inventions.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:tab==='archive'?archive(d):tab==='investigate'?`<h3>Research questions</h3>${d.questions.map(x=>`<div class="evidence">${esc(x)}</div>`).join('')}<h3>Evidence standard</h3><p>Record documented claims separately from unverified interpretations. Each claim should carry a source, date, confidence level and revision history.</p><div class="notice">No site-specific historical mystery or construction anomaly is asserted by these starter questions.</div>`:tab==='connections'?connections(d):engineering(d);$('dossier').innerHTML=`<div class="eyebrow">${esc(d.cat)} / ${esc(d.year)}</div><h2>${esc(d.name)}</h2><div class="meta">${esc(d.place)} · ${esc(d.styles.join(' · '))}</div><div style="margin-top:12px"><button class="btn" id="bookmark">${saved.has(d.id)?'★ Saved':'☆ Save to notebook'}</button></div><div class="tabs">${tabs.map(t=>`<button class="tab ${tab===t?'active':''}" data-tab="${t}">${({overview:'Story',archive:'Photos & plans',investigate:'Investigate',connections:'Connections',engineering:'Build estimate'})[t]}</button>`).join('')}</div><div class="detail">${body}</div>`;if(tab==='engineering'){['area','hours','workers','shift','days','material'].forEach(id=>$(id).addEventListener('input',estimate));estimate()}}
-$('list').addEventListener('click',e=>{let b=e.target.closest('[data-id]');if(b)select(b.dataset.id)});$('dossier').addEventListener('click',e=>{let t=e.target.closest('[data-tab]'),j=e.target.closest('[data-jump]');if(t){tab=t.dataset.tab;render()}if(j)select(j.dataset.jump);if(e.target.closest('#bookmark')){saved.has(current.id)?saved.delete(current.id):saved.add(current.id);localStorage.setItem('hiddenAtlasSaved02',JSON.stringify([...saved]));render()}});$('search').addEventListener('input',render);$('random').addEventListener('click',()=>select(data[Math.floor(Math.random()*data.length)].id));$('saved').addEventListener('click',()=>{notebook=!notebook;render()});render();
+$('list').addEventListener('click',e=>{let b=e.target.closest('[data-id]');if(b)select(b.dataset.id)});$('dossier').addEventListener('click',e=>{let t=e.target.closest('[data-tab]'),j=e.target.closest('[data-jump]');if(t){tab=t.dataset.tab;render()}if(j)select(j.dataset.jump);if(e.target.closest('#bookmark')){saved.has(current.id)?saved.delete(current.id):saved.add(current.id);persistNotebook();render()}});$('search').addEventListener('input',render);$('random').addEventListener('click',()=>select(data[Math.floor(Math.random()*data.length)].id));$('saved').addEventListener('click',()=>{notebook=!notebook;render()});render();
 </script></body></html>
