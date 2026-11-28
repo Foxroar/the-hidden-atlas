@@ -59,7 +59,7 @@ main {
 .map-shell[data-active-layer="satellite"] { --accent: #c9a7ff; }
 .map-shell[data-active-layer="terrain"] { --accent: #ff9e91; }
 .layer { display: inline-flex; gap: 7px; align-items: center; font: 600 12px var(--mono); min-height: 40px; }
-.layer[data-layer]::before, #hiking-trails::before, .category-key button::before {
+.layer[data-layer]::before, #hiking-trails::before, .focus-grid button::before {
   content: ""; display: inline-block; width: 7px; height: 7px; flex: 0 0 7px;
   transform: rotate(45deg); background: var(--layer-color, var(--category-color, var(--accent)));
 }
@@ -99,16 +99,24 @@ main {
 }
 .map-note { color: var(--muted); }
 #site-coordinates { color: var(--accent); white-space: nowrap; }
-.category-key {
-  display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px; border-top: 1px solid var(--line);
+.focus-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px;
 }
-.category-key button {
-  display: inline-flex; align-items: center; gap: 8px; padding: 6px 9px; min-height: 36px;
-  border: 1px solid transparent; border-radius: 4px; color: var(--muted); background: none; font-size: 12px;
+.focus-grid button {
+  display: grid; grid-template-columns: 7px minmax(0, 1fr) auto; align-items: center; gap: 8px;
+  min-height: 52px; padding: 9px 10px; text-align: left;
+  border: 1px solid var(--line); border-radius: 4px; background: #162233; color: var(--paper);
+  font-size: 12px; font-weight: 650;
 }
-.category-key button:hover, .category-key button[aria-pressed="true"] {
-  color: var(--paper); border-color: var(--category-color, var(--accent)); background: #172536;
+.focus-grid button:hover, .focus-grid button[aria-pressed="true"] {
+  border-color: var(--category-color, var(--accent));
+  background: color-mix(in srgb, var(--category-color, var(--accent)) 13%, #131f2e);
 }
+.focus-count { color: var(--muted); font: 11px var(--mono); }
+.collection-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+.collection-actions button { min-height: 40px; font-size: 12px; }
+#search-toggle[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
+#collection-search { margin: 0 0 12px; }
 [data-category="exposition"] { --category-color: #69d9ff; }
 [data-category="fort"] { --category-color: #ff9e91; }
 [data-category="mound"] { --category-color: #c9a7ff; }
@@ -131,16 +139,15 @@ main {
 .offline-pin { cursor: pointer; }
 .offline-pin circle { fill: var(--category-color); stroke: #111b28; stroke-width: 2; }
 .offline-pin.is-selected circle { stroke: white; stroke-width: 3; }
-aside { grid-column: 2; grid-row: 1; padding: 16px; }
+aside { grid-column: 2; grid-row: 1; align-self: start; padding: 16px; }
+#collection-heading { margin: 0; font: 600 12px var(--mono); }
 .eyebrow { color: var(--gold); font-size: 11px; letter-spacing: .12em; }
 .intro, .meta { color: var(--muted); font-size: 12px; }
 .intro { margin: 8px 0 14px; line-height: 1.6; }
-.filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-bottom: 10px; }
-input, select {
+input {
   min-width: 0; width: 100%; padding: 9px 10px; border: 1px solid #475b70; border-radius: 4px;
   background: #0c1622; color: var(--paper); min-height: 41px;
 }
-#filter { border-left: 3px solid var(--category-color, #63768a); }
 .list { display: grid; gap: 5px; max-height: 220px; overflow: auto; padding: 4px; margin: 6px -4px 0; }
 .entry {
   display: grid; gap: 3px; text-align: left; padding: 9px 11px; border-radius: 4px;
@@ -172,16 +179,15 @@ footer { padding: 14px clamp(16px, 3vw, 42px); color: var(--muted); font-size: 1
   main { grid-template-columns: minmax(0, 1fr); gap: 12px; padding-top: 12px; }
   aside { grid-column: 1; grid-row: 2; }
   #map { height: clamp(236px, 49svh, 470px); }
-  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .focus-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 450px) {
   header { padding: 14px; }
   .map-controls { padding: 10px; gap: 8px; }
   .map-toolbar .layer { padding: 7px; font-size: 11px; min-height: 40px; }
   .map-status { padding: 9px 10px; }
-  .category-key { padding: 4px 6px; }
   aside { padding: 12px; }
-  .filters { grid-template-columns: minmax(0, 1fr); }
+  .focus-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 </style>
 </head>
@@ -221,32 +227,29 @@ footer { padding: 14px clamp(16px, 3vw, 42px); color: var(--muted); font-size: 1
       <output id="site-coordinates" aria-label="Approximate selected site coordinates"></output>
       <span class="trail-note" id="trail-note" role="status"></span>
     </div>
-    <div class="category-key" role="group" aria-label="Filter map by site category">
-      <button data-category="all" aria-pressed="true">All sites</button>
-      <button data-category="exposition" aria-pressed="false">Expositions</button>
-      <button data-category="fort" aria-pressed="false">Star forts</button>
-      <button data-category="mound" aria-pressed="false">Earthworks</button>
-      <button data-category="civic" aria-pressed="false">Civic &amp; rail</button>
-      <button data-category="estate" aria-pressed="false">Estates</button>
-    </div>
   </section>
-  <aside>
-    <div class="eyebrow">American collection</div>
-    <p class="intro">Explore historic sites, vanished expositions, and architectural connections.</p>
-    <div class="filters">
-      <input id="search" placeholder="Search places, styles, inventions…" aria-label="Search structures">
-      <select id="filter" aria-label="Filter by category">
-        <option value="all">All categories</option>
-        <option value="exposition">Expositions &amp; fairs</option>
-        <option value="fort">Star forts</option>
-        <option value="mound">Mounds &amp; earthworks</option>
-        <option value="civic">Civic &amp; rail</option>
-        <option value="estate">Estates</option>
-      </select>
+  <aside aria-labelledby="collection-heading">
+    <h2 class="eyebrow" id="collection-heading">American collection</h2>
+    <p class="intro">Choose a subject to explore its sites on the map.</p>
+    <div class="focus-grid" role="group" aria-label="Collection subjects">
+      <button data-category="exposition" aria-pressed="false" aria-controls="collection-results"><span>Expositions &amp; fairs</span><span class="focus-count"></span></button>
+      <button data-category="fort" aria-pressed="false" aria-controls="collection-results"><span>Star forts</span><span class="focus-count"></span></button>
+      <button data-category="mound" aria-pressed="false" aria-controls="collection-results"><span>Mounds &amp; earthworks</span><span class="focus-count"></span></button>
+      <button data-category="civic" aria-pressed="false" aria-controls="collection-results"><span>Civic &amp; rail</span><span class="focus-count"></span></button>
+      <button data-category="estate" aria-pressed="false" aria-controls="collection-results"><span>Estates</span><span class="focus-count"></span></button>
     </div>
-    <div class="meta" id="total" aria-live="polite"></div>
-    <div class="list" id="list"></div>
-    <div class="dossier" id="dossier"><p>Select a location on the map or press Surprise me.</p></div>
+    <div class="collection-actions">
+      <button class="btn" id="browse-all" data-category="all" aria-pressed="false" aria-controls="collection-results">Browse all sites</button>
+      <button class="btn" id="search-toggle" aria-expanded="false" aria-controls="collection-search">Search collection</button>
+    </div>
+    <div id="collection-search" hidden>
+      <input type="search" id="search" placeholder="Search places, styles, inventions…" aria-label="Search collection">
+    </div>
+    <div id="collection-results" hidden>
+      <div class="meta" id="total" aria-live="polite"></div>
+      <div class="list" id="list"></div>
+    </div>
+    <div class="dossier" id="dossier" hidden></div>
   </aside>
 </main>
 <footer>Research prototype. Historical descriptions are orientation summaries, not verified archival dossiers. Archaeological pins indicate approximate public sites, not sensitive feature coordinates. Map pins do not necessarily mark exact former building footprints. Map tiles © OpenStreetMap contributors.</footer>
@@ -287,7 +290,9 @@ function offlineMap(){const el=$('map');el.innerHTML=`<svg class="offline-map" v
 function renderOfflinePins(found = data){let g=document.getElementById('offlinePins');if(!g)return;g.innerHTML=found.map(d=>{let x=70+(d.lng+125)/59*660,y=105+(49-d.lat)/25*325;return `<g class="offline-pin ${current?.id===d.id ? 'is-selected' : ''}" data-category="${d.cat}" data-offline-id="${d.id}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><circle r="7"/><title>${esc(d.name)}</title></g>`}).join('');g.onclick=e=>{let t=e.target.closest('[data-offline-id]');if(t)select(t.dataset.offlineId)}}
 const mapShell = document.querySelector('.map-shell');
 const layerButtons = document.querySelectorAll('.map-toolbar button[data-layer]');
-const categoryButtons = document.querySelectorAll('.category-key button');
+const subjectButtons = document.querySelectorAll('.focus-grid button, #browse-all');
+const searchPanel = $('collection-search');
+let category = null;
 const hikingButton = $('hiking-trails');
 const trailNote = $('trail-note');
 const layerNotes = {
@@ -349,52 +354,81 @@ function changeLayer(type) {
 }
 
 layerButtons.forEach(button => button.addEventListener('click', () => changeLayer(button.dataset.layer)));
-categoryButtons.forEach(button => button.addEventListener('click', () => {
-  $('filter').value = button.dataset.category;
+subjectButtons.forEach(button => {
+  const subject = button.dataset.category;
+  const count = button.querySelector('.focus-count');
+  if (count) count.textContent = data.filter(site => site.cat === subject).length;
+  button.addEventListener('click', () => {
+    category = category === subject ? null : subject;
+    notebook = false;
+    current = null;
+    if (subject === 'all') $('search').value = '';
+    $('list').scrollTop = 0;
+    render();
+    if (hasLeaflet) {
+      if (!category || category === 'all') {
+        map.setView([39, -97], 4);
+      } else {
+        const points = data.filter(site => site.cat === category).map(site => [site.lat, site.lng]);
+        map.fitBounds(points, {padding: [28, 28], maxZoom: 7});
+      }
+    }
+  });
+});
+$('search-toggle').addEventListener('click', () => {
+  const opening = searchPanel.hidden;
+  searchPanel.hidden = !opening;
+  $('search-toggle').setAttribute('aria-expanded', String(opening));
+  if (opening) $('search').focus();
+  else $('search').value = '';
   render();
-}));
+});
 changeLayer('street');
 
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function searchUrl(q,site){return site+'?'+new URLSearchParams({search:q})}function archive(d){let q=d.terms;return `<div class="notice">Archival discovery links are searches, not individually verified records. Confirm dates, captions and reuse rights at the source.</div><div class="links"><a target="_blank" rel="noopener" href="https://www.loc.gov/search/?${new URLSearchParams({q})}">Library of Congress ↗</a><a target="_blank" rel="noopener" href="https://www.loc.gov/resource/sn83045462/?${new URLSearchParams({fo:'json'})}" style="display:none">Hidden</a><a target="_blank" rel="noopener" href="https://www.loc.gov/newspapers/?${new URLSearchParams({fo:'json'})}" style="display:none">Hidden</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' historic newspaper headline'})}">Period headlines ↗</a><a target="_blank" rel="noopener" href="https://commons.wikimedia.org/w/index.php?${new URLSearchParams({search:q,title:'Special:MediaSearch',type:'image'})}">Historic photographs ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' original site plan architectural blueprint'})}">Plans & blueprints ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/search?${new URLSearchParams({q:q+' virtual tour 360 interior'})}">Virtual tours ↗</a></div><h3>Archive checklist</h3><ul><li>Original photographs of buildings, people and machinery</li><li>Contemporary newspapers and exhibition catalogs</li><li>Site plans, elevations and construction specifications</li><li>Documented restoration, demolition and reuse</li></ul>`}
 function connections(d){let matches=data.filter(x=>x.id!==d.id).map(x=>({d:x,shared:x.styles.filter(s=>d.styles.includes(s))})).filter(x=>x.shared.length).sort((a,b)=>b.shared.length-a.shared.length).slice(0,6);return `<p class="meta">Shared descriptors indicate similarity, not proof of a historical relationship.</p><div class="connections">${matches.map(x=>`<button class="connection" data-jump="${x.d.id}"><strong>${esc(x.d.name)}</strong><br><small>${esc(x.shared.join(' · '))}</small></button>`).join('')||'No indexed matches yet.'}</div>`}
 function engineering(d){return `<div class="notice">Experimental scenario calculator, not an AI determination or a historical cost estimate. Default inputs are hypothetical and do not represent measured dimensions, verified staffing or actual construction methods.</div><h3>Construction feasibility sandbox</h3><div class="calc"><label>Built floor area (sq ft)<input id="area" type="number" min="1" value="${d.size}"></label><label>Labor hours per sq ft<input id="hours" type="number" min="0.1" step="0.1" value="12"></label><label>Workers on site<input id="workers" type="number" min="1" value="800"></label><label>Hours / worker / day<input id="shift" type="number" min="1" max="24" value="9"></label><label>Working days / year<input id="days" type="number" min="1" max="366" value="260"></label><label>Material volume per sq ft (cu ft)<input id="material" type="number" min="0" step="0.1" value="3"></label></div><div class="result" id="estimate"></div><p class="meta">This simple model ignores parallel construction, weather, scaffolding, transport, equipment, skilled-trade mix and structural design. For temporary exposition buildings, facade area and structural system matter more than floor area alone.</p>`}
 function estimate(){let n=id=>Number($(id)?.value||0),h=n('area')*n('hours'),w=n('workers'),shift=n('shift'),days=n('days'),years=h/(w*shift*days),vol=n('area')*n('material');$('estimate').innerHTML=`<strong>Scenario results</strong><p>${Math.round(h).toLocaleString()} total labor hours<br>${(h/(w*shift)).toFixed(0)} working days · ${years.toFixed(2)} years<br>${Math.round(vol).toLocaleString()} hypothetical cubic feet of material</p><small>Illustrative arithmetic only; no sourcing or engineering validation.</small>`}
-function select(id, {initial = false} = {}) {
+function select(id) {
   current = data.find(site => site.id === id);
   tab = 'overview';
   notebook = false;
-  const latitude = `${Math.abs(current.lat).toFixed(2)}° ${current.lat >= 0 ? 'N' : 'S'}`;
-  const longitude = `${Math.abs(current.lng).toFixed(2)}° ${current.lng >= 0 ? 'E' : 'W'}`;
-  $('site-coordinates').textContent = `${latitude} · ${longitude}`;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (hasLeaflet && !initial) {
+  render();
+  if (hasLeaflet) {
     map.flyTo([current.lat, current.lng], Math.max(map.getZoom(), 7), {
       duration: .7,
       animate: !reducedMotion
     });
   }
-  render();
-  if (!initial && $('dossier').getBoundingClientRect().top >= innerHeight) {
+  if ($('dossier').getBoundingClientRect().top >= innerHeight) {
     $('dossier').scrollIntoView({behavior: reducedMotion ? 'instant' : 'smooth', block: 'start'});
   }
 }
 function render() {
-  const query = $('search').value.toLowerCase();
-  const category = $('filter').value;
+  const query = $('search').value.trim().toLowerCase();
   const found = data.filter(site =>
-    (category === 'all' || site.cat === category) &&
+    (!category || category === 'all' || site.cat === category) &&
     (!notebook || saved.has(site.id)) &&
     [site.name, site.place, site.year, site.summary, ...site.styles, ...site.inventions]
       .join(' ').toLowerCase().includes(query)
   );
 
-  $('total').textContent = `${found.length} locations · ${data.length} indexed`;
+  $('collection-results').hidden = !category && searchPanel.hidden && !notebook;
+  $('total').textContent = `${found.length} ${notebook ? 'saved ' : ''}${found.length === 1 ? 'site' : 'sites'}`;
+  $('dossier').hidden = !current;
+  if (current) {
+    const latitude = `${Math.abs(current.lat).toFixed(2)}° ${current.lat >= 0 ? 'N' : 'S'}`;
+    const longitude = `${Math.abs(current.lng).toFixed(2)}° ${current.lng >= 0 ? 'E' : 'W'}`;
+    $('site-coordinates').textContent = `${latitude} · ${longitude}`;
+  } else {
+    $('site-coordinates').textContent = '';
+  }
   $('count').textContent = saved.size;
   $('count').hidden = notebook;
   $('saved').setAttribute('aria-pressed', String(notebook));
-  $('notebook-label').textContent = notebook ? 'Show all locations' : '☆ Notebook';
-  $('filter').dataset.category = category;
-  categoryButtons.forEach(button => {
+  $('notebook-label').textContent = notebook ? 'Back to collection' : '☆ Notebook';
+  subjectButtons.forEach(button => {
     button.setAttribute('aria-pressed', String(button.dataset.category === category));
   });
 
@@ -416,5 +450,5 @@ function render() {
     renderOfflinePins(found);
   }
   if(!current)return;let d=current;let tabs=['overview','archive','investigate','connections','engineering'];let body=tab==='overview'?`<p>${esc(d.summary)}</p><h3>Historical timeline</h3><ul>${d.timeline.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><h3>People</h3><ul>${(d.people.length?d.people:['People and contributors to be researched']).map(x=>`<li>${esc(x)}</li>`).join('')}</ul><h3>Exhibits & inventions</h3><ul>${d.inventions.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:tab==='archive'?archive(d):tab==='investigate'?`<h3>Research questions</h3>${d.questions.map(x=>`<div class="evidence">${esc(x)}</div>`).join('')}<h3>Evidence standard</h3><p>Record documented claims separately from unverified interpretations. Each claim should carry a source, date, confidence level and revision history.</p><div class="notice">No site-specific historical mystery or construction anomaly is asserted by these starter questions.</div>`:tab==='connections'?connections(d):engineering(d);$('dossier').innerHTML=`<div class="eyebrow">${esc(d.cat)} / ${esc(d.year)}</div><h2>${esc(d.name)}</h2><div class="meta">${esc(d.place)} · ${esc(d.styles.join(' · '))}</div><div style="margin-top:12px"><button class="btn" id="bookmark">${saved.has(d.id)?'★ Saved':'☆ Save to notebook'}</button></div><div class="tabs">${tabs.map(t=>`<button class="tab ${tab===t?'active':''}" data-tab="${t}">${({overview:'Story',archive:'Photos & plans',investigate:'Investigate',connections:'Connections',engineering:'Build estimate'})[t]}</button>`).join('')}</div><div class="detail">${body}</div>`;if(tab==='engineering'){['area','hours','workers','shift','days','material'].forEach(id=>$(id).addEventListener('input',estimate));estimate()}}
-$('list').addEventListener('click',e=>{let b=e.target.closest('[data-id]');if(b)select(b.dataset.id)});$('dossier').addEventListener('click',e=>{let t=e.target.closest('[data-tab]'),j=e.target.closest('[data-jump]');if(t){tab=t.dataset.tab;render()}if(j)select(j.dataset.jump);if(e.target.closest('#bookmark')){saved.has(current.id)?saved.delete(current.id):saved.add(current.id);localStorage.setItem('hiddenAtlasSaved02',JSON.stringify([...saved]));render()}});$('search').addEventListener('input',render);$('filter').addEventListener('change',render);$('random').addEventListener('click',()=>select(data[Math.floor(Math.random()*data.length)].id));$('saved').addEventListener('click',()=>{notebook=!notebook;render()});select('stlouis', {initial: true});
+$('list').addEventListener('click',e=>{let b=e.target.closest('[data-id]');if(b)select(b.dataset.id)});$('dossier').addEventListener('click',e=>{let t=e.target.closest('[data-tab]'),j=e.target.closest('[data-jump]');if(t){tab=t.dataset.tab;render()}if(j)select(j.dataset.jump);if(e.target.closest('#bookmark')){saved.has(current.id)?saved.delete(current.id):saved.add(current.id);localStorage.setItem('hiddenAtlasSaved02',JSON.stringify([...saved]));render()}});$('search').addEventListener('input',render);$('random').addEventListener('click',()=>select(data[Math.floor(Math.random()*data.length)].id));$('saved').addEventListener('click',()=>{notebook=!notebook;render()});render();
 </script></body></html>
