@@ -54,20 +54,23 @@ main {
 [data-layer="street"] { --layer-color: #69d9ff; }
 [data-layer="satellite"] { --layer-color: #c9a7ff; }
 [data-layer="terrain"] { --layer-color: #ff9e91; }
+#hiking-trails { --layer-color: #83e8cb; }
 .map-shell[data-active-layer="antique"] { --accent: #f1b862; }
 .map-shell[data-active-layer="satellite"] { --accent: #c9a7ff; }
 .map-shell[data-active-layer="terrain"] { --accent: #ff9e91; }
 .layer { display: inline-flex; gap: 7px; align-items: center; font: 600 12px var(--mono); min-height: 40px; }
-.layer[data-layer]::before, .category-key button::before {
+.layer[data-layer]::before, #hiking-trails::before, .category-key button::before {
   content: ""; display: inline-block; width: 7px; height: 7px; flex: 0 0 7px;
   transform: rotate(45deg); background: var(--layer-color, var(--category-color, var(--accent)));
 }
 .layer:hover { border-color: var(--layer-color, var(--accent)); }
-.layer.active {
+.layer[aria-pressed="true"] {
   color: var(--layer-color); border-color: var(--layer-color);
   background: color-mix(in srgb, var(--layer-color) 14%, #101928);
   box-shadow: inset 0 -2px var(--layer-color), 0 0 14px color-mix(in srgb, var(--layer-color) 23%, transparent);
 }
+.layer:disabled { opacity: .55; cursor: default; }
+.trail-note { color: #aeead8; flex-basis: 100%; }
 .map-frame { position: relative; }
 #map { height: clamp(380px, 63vh, 740px); background: #182738; }
 .map-grid {
@@ -200,11 +203,12 @@ footer { padding: 14px clamp(16px, 3vw, 42px); color: var(--muted); font-size: 1
   <section class="map-shell" aria-labelledby="map-heading" data-active-layer="street">
     <div class="map-controls">
       <h2 id="map-heading">Map layers</h2>
-      <div class="map-toolbar" role="group" aria-label="Basemap">
+      <div class="map-toolbar" role="group" aria-label="Map layers">
         <button data-layer="antique" class="layer" aria-pressed="false">Antique</button>
-        <button data-layer="street" class="layer active" aria-pressed="true">Street</button>
+        <button data-layer="street" class="layer" aria-pressed="true">Street</button>
         <button data-layer="satellite" class="layer" aria-pressed="false">Satellite</button>
         <button data-layer="terrain" class="layer" aria-pressed="false">Terrain relief</button>
+        <button id="hiking-trails" class="layer" type="button" aria-pressed="false" disabled>Hiking trails</button>
         <a href="https://apps.nationalmap.gov/viewer/" target="_blank" rel="noopener" class="layer">USGS LiDAR ↗</a>
       </div>
     </div>
@@ -215,6 +219,7 @@ footer { padding: 14px clamp(16px, 3vw, 42px); color: var(--muted); font-size: 1
     <div class="map-status">
       <span class="map-note" id="mapNote" aria-live="polite">OpenStreetMap street basemap.</span>
       <output id="site-coordinates" aria-label="Approximate selected site coordinates"></output>
+      <span class="trail-note" id="trail-note" role="status"></span>
     </div>
     <div class="category-key" role="group" aria-label="Filter map by site category">
       <button data-category="all" aria-pressed="true">All sites</button>
@@ -283,6 +288,8 @@ function renderOfflinePins(found = data){let g=document.getElementById('offlineP
 const mapShell = document.querySelector('.map-shell');
 const layerButtons = document.querySelectorAll('.map-toolbar button[data-layer]');
 const categoryButtons = document.querySelectorAll('.category-key button');
+const hikingButton = $('hiking-trails');
+const trailNote = $('trail-note');
 const layerNotes = {
   antique: 'Stylized modern basemap. Historical overlays are planned.',
   street: 'OpenStreetMap street basemap.',
@@ -293,6 +300,25 @@ if (hasLeaflet) {
   map = L.map('map', {zoomControl: false}).setView([39, -97], 4);
   L.control.zoom({position: 'topright'}).addTo(map);
   L.control.scale().addTo(map);
+  const trailsPane = map.createPane('hikingTrails');
+  trailsPane.style.zIndex = '350';
+  trailsPane.style.pointerEvents = 'none';
+  const trails = L.tileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
+    pane: 'hikingTrails',
+    attribution: 'Routes © <a href="https://hiking.waymarkedtrails.org/">Waymarked Trails</a> · © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+    // The selected basemap sets the map's zoom limits.
+    minZoom: undefined,
+    maxZoom: undefined,
+    maxNativeZoom: 18
+  });
+  hikingButton.disabled = false;
+  hikingButton.addEventListener('click', () => {
+    const enabled = !map.hasLayer(trails);
+    if (enabled) trails.addTo(map);
+    else map.removeLayer(trails);
+    hikingButton.setAttribute('aria-pressed', String(enabled));
+    trailNote.textContent = enabled ? 'Zoom in to see more marked hiking routes.' : '';
+  });
   data.forEach(d => {
     const icon = L.divIcon({
       className: '',
@@ -306,13 +332,13 @@ if (hasLeaflet) {
   });
 } else {
   offlineMap();
+  trailNote.textContent = 'Hiking trails are unavailable on the offline map.';
 }
 
 function changeLayer(type) {
   mapShell.dataset.activeLayer = type;
   layerButtons.forEach(button => {
     const selected = button.dataset.layer === type;
-    button.classList.toggle('active', selected);
     button.setAttribute('aria-pressed', String(selected));
   });
   if (hasLeaflet) {
